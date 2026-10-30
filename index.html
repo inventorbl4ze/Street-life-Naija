@@ -1,0 +1,527 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>STREET LIFE: NAIJA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101820;color:white;font-family:Arial;overflow:hidden;touch-action:none}
+canvas{display:block;width:100vw;height:100dvh;background:#6b9d65}
+#top{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:6px;pointer-events:none}
+.panel{background:#101820dd;padding:8px 11px;border-radius:12px;font-size:12px;line-height:1.6}
+#message{position:absolute;top:75px;left:50%;transform:translateX(-50%);background:#101820e8;padding:9px 15px;border-radius:20px;font-size:12px;display:none;max-width:90%;text-align:center}
+#joystick{position:absolute;bottom:20px;left:18px;width:125px;height:125px;border-radius:50%;background:#ffffff28;border:2px solid #ffffff80;display:flex;align-items:center;justify-content:center;touch-action:none}
+#stick{width:52px;height:52px;border-radius:50%;background:#42baff;border:3px solid white;box-shadow:0 3px 12px #0009}
+#actions{position:absolute;right:10px;bottom:14px;display:grid;grid-template-columns:repeat(2,auto);gap:6px}
+button{border:0;border-radius:10px;padding:11px 13px;background:#1768a9;color:white;font-weight:bold;font-size:12px}
+button:active{filter:brightness(1.4)}
+#actions button{min-width:78px}
+#run.active{background:#078c47}
+#menu{position:absolute;inset:0;background:#07121bea;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+#menu h1{font-size:34px;color:#55c8ff;margin:0 0 8px}
+#menu p{color:#d4e5ef;max-width:350px;font-size:14px;line-height:1.5}
+#menu button{font-size:17px;padding:15px 35px;margin-top:12px}
+#modal{position:absolute;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:18px}
+#modalbox{width:min(380px,100%);max-height:80vh;overflow:auto;background:#172b3b;border:1px solid #5b8ba8;border-radius:17px;padding:17px}
+#modalbox h2{margin:0 0 12px;color:#68d0ff}
+#modalbox button{margin:4px}
+#modalbox p{font-size:13px;line-height:1.5}
+.small{font-size:11px;color:#b6c8d6}
+@media(max-height:450px){
+ #joystick{width:100px;height:100px;bottom:8px}
+ #stick{width:43px;height:43px}
+ #actions{bottom:6px;gap:3px}
+ #actions button{padding:8px;min-width:65px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="top">
+ <div class="panel" id="stats">₦0 | Level 1<br>Energy: 100 | Food: 100</div>
+ <div class="panel" id="place">STREET LIFE: NAIJA<br>City</div>
+</div>
+
+<div id="message"></div>
+
+<div id="joystick"><div id="stick"></div></div>
+
+<div id="actions">
+ <button id="run">🏃 RUN</button>
+ <button id="interact">🤝 INTERACT</button>
+ <button id="home">🏠 HOME</button>
+ <button id="family">👨‍👩‍👧 FAMILY</button>
+ <button id="pet">🐕 PETS</button>
+ <button id="car">🚗 CAR</button>
+ <button id="menuBtn">📱 MENU</button>
+</div>
+
+<div id="modal">
+ <div id="modalbox"></div>
+</div>
+
+<div id="menu">
+ <h1>STREET LIFE: NAIJA</h1>
+ <p>Build your life in the city. Get a job, buy a house, adopt a family, raise pets, drive around and explore.</p>
+ <p class="small">Your progress is saved on this browser.</p>
+ <button id="start">START GAME</button>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+
+let W=innerWidth,H=innerHeight;
+function resize(){
+ W=canvas.width=innerWidth;
+ H=canvas.height=innerHeight;
+}
+addEventListener("resize",resize);resize();
+
+const saved=JSON.parse(localStorage.getItem("streetLifeNaija")||"null");
+
+let player=saved?.player||{x:0,y:0,money:5000,level:1,xp:0,energy:100,food:100};
+let house=saved?.house||false;
+let carOwned=saved?.carOwned||false;
+let driving=false;
+let inside=saved?.inside||false;
+let day= saved?.day||0;
+let adoptedKids=saved?.adoptedKids||0;
+let pets=saved?.pets||0;
+let furniture=saved?.furniture||["Sofa","Bed","Chair","TV"];
+let seated="";
+let started=false;
+let paused=false;
+let sprinting=false;
+let move={x:0,y:0};
+let lastTime=0;
+let messageTimer;
+let modalOpen=false;
+
+const buildings=[
+ {name:"YOUR HOUSE",x:0,y:0,w:150,h:115,color:"#d7a56b",type:"house"},
+ {name:"SUPERMARKET",x:260,y:20,w:130,h:100,color:"#e6d65d",type:"shop"},
+ {name:"RESTAURANT",x:-290,y:20,w:130,h:100,color:"#e98d55",type:"food"},
+ {name:"HOSPITAL",x:260,y:260,w:140,h:105,color:"#eeeeee",type:"hospital"},
+ {name:"BANK",x:-290,y:260,w:130,h:105,color:"#72a8c8",type:"bank"},
+ {name:"JOB OFFICE",x:0,y:300,w:150,h:100,color:"#8a9dc5",type:"job"},
+ {name:"CAR DEALERSHIP",x:450,y:-220,w:160,h:110,color:"#7f9db4",type:"dealer"},
+ {name:"ADOPTION CENTRE",x:-480,y:-220,w:175,h:110,color:"#d49acb",type:"adoption"},
+ {name:"PET CENTRE",x:-480,y:420,w:155,h:110,color:"#8fcf8b",type:"pets"},
+ {name:"CLOTHING SHOP",x:470,y:420,w:150,h:105,color:"#bb88cc",type:"clothes"},
+ {name:"CITY PARK",x:0,y:-350,w:200,h:120,color:"#459b55",type:"park"},
+ {name:"HOTEL",x:650,y:100,w:140,h:110,color:"#bd8d9d",type:"hotel"}
+];
+
+let npcs=[
+ {x:190,y:160,name:"Tunde",color:"#e0a36c"},
+ {x:-180,y:180,name:"Amaka",color:"#bb805b"},
+ {x:400,y:100,name:"Chidi",color:"#9b684e"},
+ {x:-400,y:100,name:"Zara",color:"#d5a17b"},
+ {x:150,y:-220,name:"Emeka",color:"#b77b53"}
+];
+
+let followers=[];
+function loadFollowers(){
+ followers=[];
+ for(let i=0;i<adoptedKids;i++)
+  followers.push({kind:"child",x:player.x-35-i*20,y:player.y+25,color:"#e9b68d"});
+ for(let i=0;i<pets;i++)
+  followers.push({kind:"pet",x:player.x-55-i*20,y:player.y+45});
+}
+loadFollowers();
+
+let car={x:player.x+60,y:player.y+80};
+let camera={x:0,y:0};
+
+function save(){
+ localStorage.setItem("streetLifeNaija",JSON.stringify({
+ player,house,carOwned,inside,day,adoptedKids,pets,furniture
+ }));
+}
+function say(t){
+ $("message").textContent=t;
+ $("message").style.display="block";
+ clearTimeout(messageTimer);
+ messageTimer=setTimeout(()=>$("message").style.display="none",2300);
+}
+function xp(n){
+ player.xp+=n;
+ if(player.xp>=player.level*100){
+  player.xp=0;player.level++;
+  say("LEVEL UP! You are now level "+player.level);
+ }
+}
+function openModal(title,html){
+ modalOpen=true;paused=true;
+ $("modalbox").innerHTML=`<h2>${title}</h2>${html}<button onclick="closeModal()">CLOSE</button>`;
+ $("modal").style.display="flex";
+}
+function closeModal(){
+ $("modal").style.display="none";
+ modalOpen=false;paused=false;
+}
+function btn(label,action){
+ return `<button onclick="${action}">${label}</button>`;
+}
+
+function startGame(){
+ started=true;
+ $("menu").style.display="none";
+ say("Welcome to the city! Explore and build your life.");
+}
+$("start").onclick=startGame;
+
+function screenX(x){return x-camera.x+W/2}
+function screenY(y){return y-camera.y+H/2}
+
+function drawRoads(){
+ ctx.fillStyle="#6b9d65";ctx.fillRect(0,0,W,H);
+ ctx.fillStyle="#555b60";
+ for(let x=-1000;x<=1000;x+=400){
+  let sx=screenX(x);
+  ctx.fillRect(sx-35,0,70,H);
+ }
+ for(let y=-1000;y<=1000;y+=400){
+  let sy=screenY(y);
+  ctx.fillRect(0,sy-35,W,70);
+ }
+ ctx.strokeStyle="#f2d46d";ctx.setLineDash([18,18]);ctx.lineWidth=3;
+ for(let x=-1000;x<=1000;x+=400){
+  ctx.beginPath();ctx.moveTo(screenX(x),0);ctx.lineTo(screenX(x),H);ctx.stroke();
+ }
+ for(let y=-1000;y<=1000;y+=400){
+  ctx.beginPath();ctx.moveTo(0,screenY(y));ctx.lineTo(W,screenY(y));ctx.stroke();
+ }
+ ctx.setLineDash([]);
+}
+
+function drawBuilding(b){
+ let x=screenX(b.x),y=screenY(b.y);
+ if(inside&&b.type==="house")return;
+ ctx.fillStyle="#0004";ctx.fillRect(x+5,y+7,b.w,b.h);
+ ctx.fillStyle=b.color;ctx.fillRect(x,y,b.w,b.h);
+ ctx.fillStyle="#384c5b";ctx.fillRect(x+b.w*.38,y+b.h*.48,b.w*.24,b.h*.52);
+ ctx.fillStyle="#d9f1ff";
+ ctx.fillRect(x+12,y+15,24,22);
+ ctx.fillRect(x+b.w-38,y+15,24,22);
+ ctx.fillStyle="#172c3a";ctx.font="bold 11px Arial";ctx.textAlign="center";
+ ctx.fillText(b.name,x+b.w/2,y-8);
+}
+
+function drawPerson(x,y,color,label){
+ let sx=screenX(x),sy=screenY(y);
+ ctx.fillStyle="#0004";ctx.beginPath();ctx.ellipse(sx,sy+12,10,5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=color;ctx.beginPath();ctx.arc(sx,sy,9,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#242424";ctx.fillRect(sx-7,sy+7,14,15);
+ if(label){
+  ctx.fillStyle="white";ctx.font="10px Arial";ctx.textAlign="center";ctx.fillText(label,sx,sy-14);
+ }
+}
+
+function drawPet(x,y){
+ let sx=screenX(x),sy=screenY(y);
+ ctx.fillStyle="#a76b3e";ctx.beginPath();ctx.ellipse(sx,sy,11,7,0,0,Math.PI*2);ctx.fill();
+ ctx.beginPath();ctx.arc(sx+8,sy-5,6,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#222";ctx.fillRect(sx+10,sy-7,2,2);
+}
+
+function drawCar(){
+ if(!carOwned)return;
+ let x=screenX(car.x),y=screenY(car.y);
+ ctx.fillStyle="#111";ctx.fillRect(x-19,y-11,40,23);
+ ctx.fillStyle="#e64d43";ctx.fillRect(x-16,y-10,32,18);
+ ctx.fillStyle="#bceaff";ctx.fillRect(x-8,y-8,15,8);
+ ctx.fillStyle="#111";
+ ctx.fillRect(x-14,y+6,8,5);ctx.fillRect(x+7,y+6,8,5);
+}
+
+function drawPlayer(){
+ if(inside){
+  drawPerson(player.x,player.y,"#38aaff","YOU");
+ }else{
+  drawPerson(player.x,player.y,"#38aaff","YOU");
+ }
+}
+
+function drawHouseInterior(){
+ ctx.fillStyle="#b98c61";ctx.fillRect(0,0,W,H);
+ ctx.fillStyle="#d7bd99";
+ for(let x=0;x<W;x+=55)for(let y=0;y<H;y+=55){
+  ctx.strokeStyle="#b99d7d";ctx.strokeRect(x,y,55,55);
+ }
+ ctx.fillStyle="#e8d4b5";ctx.fillRect(W/2-180,H/2-130,360,260);
+ ctx.fillStyle="#79533b";ctx.fillRect(W/2-170,H/2-120,340,240);
+ ctx.fillStyle="#b77b54";ctx.fillRect(W/2-155,H/2-105,310,210);
+ ctx.fillStyle="#f3e3ca";ctx.font="bold 16px Arial";ctx.textAlign="center";
+ ctx.fillText("YOUR HOME",W/2,H/2-145);
+ let items=[
+  ["SOFA",W/2-110,H/2-55,"#536b8a"],
+  ["BED",W/2+50,H/2-70,"#4e8ca0"],
+  ["CHAIR",W/2-20,H/2+55,"#a46b42"],
+  ["TV",W/2+100,H/2+55,"#242a30"]
+ ];
+ for(let [name,x,y,color] of items){
+  ctx.fillStyle=color;ctx.fillRect(x,y,55,35);
+  ctx.fillStyle="white";ctx.font="10px Arial";ctx.fillText(name,x+27,y-5);
+ }
+ ctx.fillStyle="#f1d8b2";ctx.fillRect(W/2-12,H/2+95,24,14);
+}
+
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ if(inside){
+  drawHouseInterior();
+  drawPlayer();
+ }else{
+  drawRoads();
+  buildings.forEach(drawBuilding);
+  npcs.forEach(n=>drawPerson(n.x,n.y,n.color,n.name));
+  followers.forEach(f=>f.kind==="pet"?drawPet(f.x,f.y):drawPerson(f.x,f.y,f.color,""));
+  drawCar();drawPlayer();
+ }
+ $("stats").innerHTML=`₦${Math.floor(player.money).toLocaleString()} | Level ${player.level}<br>Energy: ${Math.floor(player.energy)} | Food: ${Math.floor(player.food)}`;
+ $("place").innerHTML=inside?"YOUR HOUSE<br>Home interior":`STREET LIFE: NAIJA<br>${driving?"Driving":"City"} | Day ${Math.floor(day)+1}`;
+}
+
+function followFamily(){
+ followers.forEach((f,i)=>{
+  let targetX=player.x-28-(i%3)*20;
+  let targetY=player.y+25+Math.floor(i/3)*20;
+  f.x+=(targetX-f.x)*.06;
+  f.y+=(targetY-f.y)*.06;
+ });
+}
+function movePlayer(){
+ if(!started||paused||!move.x&&!move.y)return;
+ if(seated)return;
+ let speed=driving?4.5:(sprinting?4:2.3);
+ player.x+=move.x*speed;
+ player.y+=move.y*speed;
+ player.energy=Math.max(0,player.energy-.012);
+ if(driving){car.x=player.x;car.y=player.y;}
+}
+function loop(t){
+ let dt=Math.min((t-lastTime)/1000||0,.05);lastTime=t;
+ if(started&&!paused){
+  movePlayer();followFamily();day+=dt*.04;
+  camera.x+=(player.x-camera.x)*.12;
+  camera.y+=(player.y-camera.y)*.12;
+  if(Math.random()<.001)player.food=Math.max(0,player.food-1);
+ }
+ draw();
+ requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Joystick
+let joyActive=false,joyPointer=null;
+const joystick=$("joystick"),stick=$("stick");
+function resetJoy(){
+ move={x:0,y:0};stick.style.transform="translate(0px,0px)";
+ joyActive=false;joyPointer=null;
+}
+function updateJoy(e){
+ const r=joystick.getBoundingClientRect();
+ let dx=e.clientX-(r.left+r.width/2);
+ let dy=e.clientY-(r.top+r.height/2);
+ const max=43,d=Math.hypot(dx,dy);
+ if(d>max){dx=dx/d*max;dy=dy/d*max;}
+ move={x:dx/max,y:dy/max};
+ stick.style.transform=`translate(${dx}px,${dy}px)`;
+}
+joystick.addEventListener("pointerdown",e=>{
+ e.preventDefault();joyActive=true;joyPointer=e.pointerId;
+ joystick.setPointerCapture(e.pointerId);updateJoy(e);
+});
+joystick.addEventListener("pointermove",e=>{
+ if(joyActive&&e.pointerId===joyPointer)updateJoy(e);
+});
+joystick.addEventListener("pointerup",resetJoy);
+joystick.addEventListener("pointercancel",resetJoy);
+joystick.addEventListener("lostpointercapture",resetJoy);
+
+$("run").onclick=()=>{
+ sprinting=!sprinting;
+ $("run").classList.toggle("active",sprinting);
+ $("run").textContent=sprinting?"🏃 RUN ON":"🏃 RUN";
+};
+
+function nearestBuilding(){
+ return buildings.find(b=>Math.abs(player.x-b.x)<b.w/2+45&&Math.abs(player.y-b.y)<b.h/2+45);
+}
+function interact(){
+ if(!started)return;
+ if(inside){interactFurniture();return;}
+ let b=nearestBuilding();
+ if(!b){say("Move closer to a building or person.");return;}
+ switch(b.type){
+  case "house":
+   if(!house){
+    openModal("Your first home",`<p>Buy this house for ₦10,000?</p>${btn("BUY HOUSE","buyHouse()")}`);
+   }else enterHouse();
+   break;
+  case "job":
+   openModal("JOB OFFICE",`<p>Choose a job and earn money.</p>${btn("Delivery job + ₦1,500","work(1500)")}${btn("Office job + ₦2,500","work(2500)")}${btn("Construction job + ₦2,000","work(2000)")}`);
+   break;
+  case "food":
+   openModal("RESTAURANT",`<p>Eat a meal and restore your food.</p>${btn("Buy meal ₦500","eat()")}`);
+   break;
+  case "shop":
+   openModal("SUPERMARKET",`<p>Buy supplies.</p>${btn("Food ₦300","buyFood()")}`);
+   break;
+  case "dealer":
+   openModal("CAR DEALERSHIP",`<p>Buy your own car for ₦20,000.</p>${btn("BUY CAR","buyCar()")}`);
+   break;
+  case "adoption":
+   openModal("ADOPTION CENTRE",`<p>Welcome! You can adopt a child and build your family.</p>${btn("Adopt a child - ₦3,000","adoptChild()")}`);
+   break;
+  case "pets":
+   openModal("PET CENTRE",`<p>Choose a companion.</p>${btn("Adopt a dog - ₦1,000","adoptPet()")}${btn("Adopt another pet - ₦1,500","adoptPet()")}`);
+   break;
+  case "hospital":
+   openModal("HOSPITAL",`<p>Rest and recover your energy.</p>${btn("Recover - ₦500","heal()")}`);
+   break;
+  case "bank":
+   openModal("BANK",`<p>Your cash: ₦${player.money.toLocaleString()}</p>${btn("View account","say('Your account is active.')")}`);
+   break;
+  case "clothes":
+   openModal("CLOTHING SHOP",`<p>Change your outfit.</p>${btn("Buy outfit ₦1,000","buyClothes()")}`);
+   break;
+  case "park":
+   say("Enjoy your time at the park!");
+   break;
+  case "hotel":
+   openModal("HOTEL",`<p>Rest for the day.</p>${btn("Rest - ₦700","sleep()")}`);
+   break;
+ }
+}
+$("interact").onclick=interact;
+
+function buyHouse(){
+ if(player.money<10000){say("You need ₦10,000.");return;}
+ player.money-=10000;house=true;save();closeModal();say("Congratulations! You own a house.");
+}
+function enterHouse(){
+ inside=true;driving=false;seated="";
+ player.x=0;player.y=0;save();say("Welcome home. Walk to the furniture and interact.");
+}
+function leaveHouse(){
+ inside=false;seated="";player.x=80;player.y=0;save();say("You are back in the city.");
+}
+function interactFurniture(){
+ let options=[
+  ["SOFA",W/2-110,H/2-55],
+  ["BED",W/2+50,H/2-70],
+  ["CHAIR",W/2-20,H/2+55],
+  ["TV",W/2+100,H/2+55]
+ ];
+ let nearest=options.find(o=>Math.abs(player.x-(o[1]-W/2))<85&&Math.abs(player.y-(o[2]-H/2))<85);
+ if(!nearest){
+  openModal("HOME",`<p>What would you like to do?</p>${btn("Leave house","leaveHouse()")}${btn("Arrange furniture","furnitureMenu()")}${btn("Sleep","sleep()")}`);
+  return;
+ }
+ if(nearest[0]==="TV"){
+  openModal("TELEVISION",`<p>Your TV is on. Enjoy your home entertainment.</p>${btn("Turn TV off","say('TV switched off.')")}`);
+ }else{
+  seated=nearest[0];
+  openModal(nearest[0],`<p>You are sitting/resting at your ${nearest[0].toLowerCase()}.</p>${btn("Sit and relax","sitDown()")}${btn("Get up","standUp()")}`);
+ }
+}
+function sitDown(){
+ closeModal();say("You are sitting down. Press INTERACT to get up.");
+}
+function standUp(){
+ seated="";closeModal();say("You stood up.");
+}
+function furnitureMenu(){
+ openModal("FURNITURE",`<p>Make your home more comfortable.</p>${btn("Buy sofa ₦1,000","buyFurniture('Sofa',1000)")}${btn("Buy bed ₦2,000","buyFurniture('Bed',2000)")}${btn("Buy chair ₦700","buyFurniture('Chair',700)")}${btn("Buy TV ₦3,000","buyFurniture('TV',3000)")}`);
+}
+function buyFurniture(name,cost){
+ if(player.money<cost){say("Not enough money.");return;}
+ player.money-=cost;furniture.push(name);save();closeModal();say(name+" purchased!");
+}
+
+function adoptChild(){
+ if(player.money<3000){say("You need ₦3,000.");return;}
+ player.money-=3000;adoptedKids++;loadFollowers();save();closeModal();say("A child has joined your family!");
+}
+function adoptPet(){
+ if(player.money<1000){say("You need ₦1,000.");return;}
+ player.money-=1000;pets++;loadFollowers();save();closeModal();say("Your new pet is ready to explore!");
+}
+function work(amount){
+ player.money+=amount;xp(30);player.energy=Math.max(0,player.energy-8);
+ closeModal();say("Job completed! You earned ₦"+amount.toLocaleString());save();
+}
+function eat(){
+ if(player.money<500){say("Not enough money.");return;}
+ player.money-=500;player.food=Math.min(100,player.food+40);closeModal();say("You enjoyed your meal.");save();
+}
+function buyFood(){
+ if(player.money<300){say("Not enough money.");return;}
+ player.money-=300;player.food=Math.min(100,player.food+25);closeModal();say("Food purchased.");save();
+}
+function buyCar(){
+ if(player.money<20000){say("You need ₦20,000.");return;}
+ player.money-=20000;carOwned=true;car.x=player.x+60;car.y=player.y;closeModal();say("You bought a car!");save();
+}
+function heal(){
+ if(player.money<500){say("Not enough money.");return;}
+ player.money-=500;player.energy=100;closeModal();say("You feel refreshed.");save();
+}
+function sleep(){
+ player.energy=100;player.food=Math.max(0,player.food-5);day+=.3;closeModal();say("You rested. A new day begins.");save();
+}
+function buyClothes(){
+ if(player.money<1000){say("Not enough money.");return;}
+ player.money-=1000;closeModal();say("New outfit purchased!");save();
+}
+function toggleCar(){
+ if(inside){say("Leave your house before using your car.");return;}
+ if(!carOwned){say("Visit the car dealership to buy a car.");return;}
+ driving=!driving;
+ if(driving){car.x=player.x;car.y=player.y;say("You entered your car. Use the joystick to drive.");}
+ else say("You got out of your car.");
+}
+$("car").onclick=toggleCar;
+
+$("home").onclick=()=>{
+ if(inside)leaveHouse();
+ else if(house)enterHouse();
+ else say("You need to buy your house first.");
+};
+$("family").onclick=()=>{
+ openModal("YOUR FAMILY",`<p>Children adopted: ${adoptedKids}</p><p>Your children follow you around the city and can travel with you.</p>${btn("Visit adoption centre","closeModal();say('Find the adoption centre on the map.')")}`);
+};
+$("pet").onclick=()=>{
+ openModal("YOUR PETS",`<p>Pets adopted: ${pets}</p><p>Your pets follow you around the city and on your journeys.</p>`);
+};
+$("menuBtn").onclick=()=>{
+ openModal("GAME MENU",`<p>Money: ₦${player.money.toLocaleString()}</p><p>Level: ${player.level}</p><p>Children: ${adoptedKids} | Pets: ${pets}</p>${btn("Save game","save();say('Game saved.')")}${btn("Go home","closeModal();if(house)enterHouse();else say('Buy a house first.')")}${btn("Sleep","sleep()")}`);
+};
+
+addEventListener("keydown",e=>{
+ let k=e.key.toLowerCase();
+ if(k==="w"||k==="arrowup")move.y=-1;
+ if(k==="s"||k==="arrowdown")move.y=1;
+ if(k==="a"||k==="arrowleft")move.x=-1;
+ if(k==="d"||k==="arrowright")move.x=1;
+ if(k==="e")interact();
+});
+addEventListener("keyup",e=>{
+ let k=e.key.toLowerCase();
+ if(["w","s","a","d","arrowup","arrowdown","arrowleft","arrowright"].includes(k))
+ move={x:0,y:0};
+});
+
+setInterval(save,5000);
+addEventListener("beforeunload",save);
+</script>
+</body>
+</html>
