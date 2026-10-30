@@ -6,670 +6,354 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>STREET LIFE: NAIJA</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#07111c;color:white;font-family:Arial,sans-serif;overflow:hidden;touch-action:none}
-canvas{display:block}
-#game{position:fixed;inset:0;width:100%;height:100%}
-.panel{position:absolute;background:#101d2beF;border:1px solid #344b60;border-radius:13px;padding:12px;box-shadow:0 5px 20px #0008}
-#hud{top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
-#stats{font-size:12px;line-height:1.7}
-#money{font-size:20px;font-weight:bold;color:#61f5a5}
-#level{color:#7dd7ff}
-#buttons{position:absolute;right:12px;top:100px;display:grid;gap:8px}
-button{background:#18334a;color:white;border:1px solid #42627a;padding:11px 13px;border-radius:10px;font-weight:bold;font-size:12px}
-button:active{background:#28729a}
-#joystick{position:absolute;bottom:25px;left:25px;width:125px;height:125px;border-radius:50%;background:#ffffff18;border:2px solid #ffffff50;touch-action:none}
-#stick{position:absolute;width:48px;height:48px;border-radius:50%;background:#d9f4ffbb;left:36px;top:36px}
-#action{position:absolute;right:25px;bottom:35px;width:78px;height:78px;border-radius:50%;background:#167ca9;font-size:13px}
-#panel{display:none;position:absolute;inset:8%;max-height:84%;overflow:auto}
-#panel h2{margin:3px 0 12px;color:#83dfff}
-#panel p{font-size:13px;line-height:1.5;color:#d5e4ef}
-.options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-#toast{position:absolute;top:90px;left:50%;transform:translateX(-50%);background:#101d2beF;padding:10px 16px;border-radius:10px;display:none;text-align:center;font-size:13px;max-width:90%}
-#map{display:none;position:absolute;inset:7%;background:#101d2b;border:1px solid #547087;border-radius:15px;padding:12px}
-#map canvas{width:100%;height:75%;background:#253b40;border-radius:10px}
-#maplist{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-#start{position:absolute;inset:0;background:linear-gradient(#06111ddd,#07111cf2),radial-gradient(circle,#254d62,#07111c);display:flex;align-items:center;justify-content:center;text-align:center}
-#startbox{width:min(90%,430px)}
-#start h1{font-size:34px;letter-spacing:2px;margin-bottom:4px}
-#start h1 span{color:#56d8ff}
-#start p{color:#bdd0dd;font-size:13px;line-height:1.6}
-#start button{font-size:16px;padding:16px 30px;background:#087da8}
-.small{font-size:11px;color:#a9bdca}
-#interaction{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:12px;background:#101d2bdd;padding:8px 13px;border-radius:8px;display:none;white-space:nowrap}
-@media(min-width:700px){#joystick{width:145px;height:145px}#stick{left:46px;top:46px}}
+*{box-sizing:border-box}body{margin:0;background:#101820;color:white;font-family:Arial;overflow:hidden;touch-action:none}
+canvas{display:block;width:100vw;height:100dvh;background:#527b54}
+#hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;pointer-events:none;gap:6px}
+.panel{background:#101820dd;border:1px solid #ffffff30;border-radius:10px;padding:8px 10px;font-size:12px;box-shadow:0 3px 10px #0005}
+#stats{line-height:1.6}#mission{max-width:48%;text-align:right}
+#toast{position:absolute;top:76px;left:50%;transform:translateX(-50%);background:#111e;color:#fff;padding:10px 15px;border-radius:10px;display:none;text-align:center;font-size:13px}
+#controls{position:absolute;bottom:15px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+#stick{width:125px;height:125px;border-radius:50%;background:#ffffff22;border:2px solid #ffffff66;position:relative;pointer-events:auto}
+#nub{width:48px;height:48px;border-radius:50%;background:#ffffffaa;position:absolute;left:36px;top:36px}
+#buttons{display:grid;grid-template-columns:repeat(2,62px);gap:8px;pointer-events:auto}
+button{border:1px solid #ffffff55;background:#172b39eF;color:white;border-radius:12px;padding:12px 5px;font-weight:bold;font-size:11px;min-height:48px}
+button:active{background:#287c68}
+#menu{position:absolute;inset:0;background:#07121bea;display:flex;align-items:center;justify-content:center;padding:18px}
+#menuCard{width:min(440px,100%);max-height:90%;overflow:auto;background:#142632;border:1px solid #ffffff33;border-radius:18px;padding:18px}
+h1{font-size:25px;margin:0 0 5px;color:#73e0b3}h2{font-size:17px;margin:14px 0 7px}
+.menuBtn{width:100%;margin:4px 0;text-align:left}
+#map{position:absolute;right:12px;top:85px;width:100px;height:100px;background:#14232acc;border:1px solid #ffffff66;border-radius:9px}
+#hint{position:absolute;bottom:145px;left:50%;transform:translateX(-50%);background:#101820cc;padding:7px 10px;border-radius:8px;font-size:11px;white-space:nowrap}
+@media(min-width:700px){#stick{width:140px;height:140px}#nub{left:42px;top:42px}#buttons{grid-template-columns:repeat(3,70px)}}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
-
-<div id="hud" class="panel">
- <div id="stats">
-  <div id="level">LEVEL 1 · BEGINNER</div>
-  <div>Health: <span id="health">100</span>%</div>
-  <div>Energy: <span id="energy">100</span>%</div>
-  <div>Hunger: <span id="hunger">100</span>%</div>
-  <div id="location">Lagos City</div>
- </div>
- <div style="text-align:right">
-  <div id="money">₦2,500</div>
-  <div class="small">NAIRA BALANCE</div>
-  <div id="xp" class="small">XP: 0 / 100</div>
- </div>
+<div id="hud">
+ <div class="panel" id="stats">₦0<br>Health: 100<br>Energy: 100</div>
+ <div class="panel" id="mission">STREET LIFE: NAIJA<br>Explore Lagos</div>
 </div>
-
-<div id="buttons">
- <button onclick="openMap()">🗺 MAP</button>
- <button onclick="openMenu('phone')">📱 PHONE</button>
- <button onclick="openMenu('inventory')">🎒 BAG</button>
- <button onclick="openMenu('save')">💾 SAVE</button>
-</div>
-
-<div id="joystick"><div id="stick"></div></div>
-<button id="action">ACTION</button>
-<div id="interaction"></div>
+<canvas id="map" width="100" height="100"></canvas>
 <div id="toast"></div>
-
-<div id="panel" class="panel"></div>
-
-<div id="map">
- <h3>NAIJA CITY MAP</h3>
- <canvas id="mapcanvas" width="500" height="400"></canvas>
- <div id="maplist"></div>
- <button onclick="closeMap()" style="margin-top:10px">CLOSE MAP</button>
-</div>
-
-<div id="start">
- <div id="startbox">
-  <h1>STREET LIFE <span>NAIJA</span></h1>
-  <p>YOUR CITY. YOUR STORY. YOUR RULES.<br>
-  Build your life in a living Nigerian city. Work, explore, shop, drive, own property and become successful.</p>
-  <button onclick="startGame()">ENTER THE CITY</button>
-  <p class="small">FINAL SINGLE-PLAYER EDITION · OFFLINE · PROGRESS SAVED ON THIS DEVICE</p>
+<div id="hint">Move around • Approach a door or vehicle • Press ACTION</div>
+<div id="controls">
+ <div id="stick"><div id="nub"></div></div>
+ <div id="buttons">
+  <button id="action">ACTION</button>
+  <button id="run">RUN</button>
+  <button id="jobs">MISSIONS</button>
+  <button id="shop">SHOP</button>
+  <button id="car">VEHICLE</button>
+  <button id="menuBtn">MENU</button>
  </div>
 </div>
-
+<div id="menu">
+ <div id="menuCard">
+  <h1>STREET LIFE: NAIJA</h1>
+  <p>A Lagos city-life adventure. Explore, work, earn money, buy property and vehicles, and complete missions.</p>
+  <button class="menuBtn" id="start">▶ START GAME</button>
+  <button class="menuBtn" id="continue">↻ CONTINUE SAVED GAME</button>
+  <h2>How to play</h2>
+  <p>Use the joystick to move. Walk near a vehicle and press VEHICLE to enter it. Use ACTION near doors, people and mission objects. Complete jobs to earn money.</p>
+  <p><small>Offline single-player • Progress saves on this device</small></p>
+ </div>
+</div>
 <script>
+(()=>{
 "use strict";
-
-/* =========================
-   GAME DATA
-========================= */
-const canvas=document.getElementById("game");
-const gl=canvas.getContext("webgl",{antialias:true});
-if(!gl){alert("WebGL is unavailable in this browser.");}
-
-const state={
- money:2500,level:1,xp:0,health:100,energy:100,hunger:100,
- day:1,hour:8,minute:0,job:null,inventory:[],ownedHouse:false,
- ownedCar:false,carMode:false,inside:null,food:0,clothes:0,
- destination:null,gameStarted:false
-};
-
-const player={x:0,z:0,y:0,angle:0,speed:0};
-const npcs=[];
-const buildings=[];
-const destinations=[
- {name:"Central Market",x:-35,z:-35,type:"market"},
- {name:"Mega Supermarket",x:35,z:-35,type:"shop"},
- {name:"City Restaurant",x:0,z:-65,type:"restaurant"},
- {name:"Job Centre",x:-65,z:0,type:"job"},
- {name:"Property Office",x:65,z:0,type:"property"},
- {name:"Auto Garage",x:0,z:35,type:"garage"},
- {name:"City Hospital",x:65,z:65,type:"hospital"},
- {name:"Your Neighbourhood",x:0,z:0,type:"home"}
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
+const map=document.getElementById("map"),mc=map.getContext("2d");
+let W=innerWidth,H=innerHeight,dpr=1;
+function resize(){dpr=Math.min(devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener("resize",resize);resize();
+const $=id=>document.getElementById(id);
+let toastTimer;
+function toast(s){$("toast").textContent=s;$("toast").style.display="block";clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").style.display="none",2200)}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),rand=(a,b)=>a+Math.random()*(b-a);
+const saveKey="streetLifeNaijaSaveV2";
+let gameOn=false,paused=false,inside=null,near=null,missionIndex=0,missionStep=0;
+let player={x:450,y:450,vx:0,vy:0,angle:0,health:100,energy:100,money:3500,walk:0,car:null,home:false,inventory:[]};
+let camera={x:450,y:450};
+const buildings=[],roads=[],doors=[],shops=[],people=[],cars=[],props=[];
+const citySize=2600,block=260,roadW=100;
+function buildCity(){
+ buildings.length=0;doors.length=0;shops.length=0;roads.length=0;props.length=0;
+ // Grid roads with buildings between them
+ for(let x=0;x<=citySize;x+=block)roads.push({x,y:0,w:roadW,h:citySize});
+ for(let y=0;y<=citySize;y+=block)roads.push({x:0,y,w:citySize,h:roadW});
+ const types=["HOUSE","SHOP","OFFICE","MALL","GARAGE","RESTAURANT"];
+ for(let x=roadW+25;x<citySize-block/2;x+=block){
+  for(let y=roadW+25;y<citySize-block/2;y+=block){
+   let w=rand(95,145),h=rand(90,145),bx=x+rand(8,65),by=y+rand(8,65);
+   let type=types[Math.floor(rand(0,types.length))];
+   let b={x:bx,y:by,w,h,type,color:["#b77c58","#d3b56d","#8298a1","#9d8067","#778c75"][Math.floor(rand(0,5))],roof:["#875a49","#6d7379","#9a8a68"][Math.floor(rand(0,3))]};
+   buildings.push(b);
+   let d={x:bx+w/2,y:by+h+5,building:b,type:type};
+   doors.push(d);
+   if(type==="SHOP"||type==="MALL"||type==="GARAGE"||type==="RESTAURANT")shops.push(d);
+  }
+ }
+}
+buildCity();
+function makePeople(){
+ for(let i=0;i<35;i++)people.push({x:rand(120,2450),y:rand(120,2450),vx:0,vy:0,angle:rand(0,6.28),walk:rand(0,6),wait:rand(0,4),shirt:["#e6b64f","#db6958","#4a9b9a","#d4d4d4","#7658a3"][i%5],skin:["#75452e","#9a6546","#553321"][i%3],talk:false});
+}
+makePeople();
+function spawnCars(){
+ for(let i=0;i<18;i++){
+  let horizontal=Math.random()>.5;
+  let lane= Math.floor(rand(0,10))*block+ (Math.random()>.5?65:35);
+  cars.push({x:horizontal?rand(0,citySize):lane,y:horizontal?lane:rand(0,citySize),angle:horizontal?0:Math.PI/2,speed:rand(35,75),max:rand(65,100),color:["#d64f40","#e6e1d3","#277f9a","#25292c","#c7a33e"][i%5],traffic:true,turn:0});
+ }
+}
+spawnCars();
+const missions=[
+ {name:"First Day in Lagos",desc:"Find the yellow delivery package near the bus stop.",reward:1500,type:"package",x:700,y:370},
+ {name:"Quick Delivery",desc:"Take the package to the restaurant.",reward:2500,type:"deliver",x:1300,y:620},
+ {name:"Neighbourhood Help",desc:"Talk to a resident near the market.",reward:1800,type:"talk",x:1780,y:900},
+ {name:"Mechanic's Errand",desc:"Visit the garage and collect your payment.",reward:3000,type:"garage",x:2200,y:1500},
+ {name:"New Beginnings",desc:"Save ₦10,000 and buy your first home.",reward:5000,type:"home",x:400,y:1800}
 ];
-
-function building(x,z,w,d,h,color,name,type){
- buildings.push({x,z,w,d,h,color,name,type});
-}
-building(-35,-35,12,10,9,[.75,.43,.18],"Central Market","market");
-building(35,-35,12,10,10,[.2,.55,.4],"Mega Supermarket","shop");
-building(0,-65,15,10,9,[.65,.3,.2],"City Restaurant","restaurant");
-building(-65,0,13,11,11,[.25,.42,.7],"Job Centre","job");
-building(65,0,13,11,11,[.5,.35,.68],"Property Office","property");
-building(0,35,15,11,9,[.35,.4,.48],"Auto Garage","garage");
-building(65,65,14,12,12,[.75,.25,.3],"City Hospital","hospital");
-building(-65,65,13,11,9,[.65,.5,.25],"Fashion Store","clothes");
-building(-30,65,13,11,10,[.3,.5,.65],"Electronics Shop","electronics");
-building(35,65,13,11,9,[.5,.45,.3],"Residential House","house");
-for(let x=-90;x<=90;x+=30){
- for(let z=-90;z<=90;z+=30){
-  if(Math.abs(x)<15&&Math.abs(z)<15)continue;
-  if(buildings.some(b=>Math.abs(b.x-x)<15&&Math.abs(b.z-z)<15))continue;
-  building(x,z,12,12,7+Math.random()*5,[.35+Math.random()*.2,.35,.4],"House","house");
- }
-}
-for(let i=0;i<24;i++){
- npcs.push({x:Math.random()*150-75,z:Math.random()*150-75,
- angle:Math.random()*6.28,speed:.5+Math.random()*.5});
-}
-
-/* =========================
-   WEBGL 3D ENGINE
-========================= */
-const vertex=`
-attribute vec3 position;
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
-void main(){gl_Position=projection*view*model*vec4(position,1.0);}
-`;
-const fragment=`
-precision mediump float;
-uniform vec3 color;
-void main(){gl_FragColor=vec4(color,1.0);}
-`;
-function shader(type,src){
- const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
- if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(s);
- return s;
-}
-let program,buff,loc={};
-if(gl){
- program=gl.createProgram();
- gl.attachShader(program,shader(gl.VERTEX_SHADER,vertex));
- gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fragment));
- gl.linkProgram(program);gl.useProgram(program);
- const verts=[
- -1,-1,-1, 1,-1,-1, 1,1,-1,-1,-1,-1,1,1,-1,-1,1,-1,
- -1,-1,1,1,-1,1,1,1,1,-1,-1,1,1,1,1,-1,1,1,
- -1,-1,-1,-1,1,-1,-1,1,1,-1,-1,-1,-1,1,1,-1,-1,1,
- 1,-1,-1,1,1,-1,1,1,1,1,-1,-1,1,1,1,1,-1,1,
- -1,1,-1,1,1,-1,1,1,1,-1,1,-1,1,1,1,-1,1,1,
- -1,-1,-1,1,-1,-1,1,-1,1,-1,-1,-1,1,-1,1,-1,-1,1
- ];
- buff=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buff);
- gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(verts),gl.STATIC_DRAW);
- loc.position=gl.getAttribLocation(program,"position");
- loc.projection=gl.getUniformLocation(program,"projection");
- loc.view=gl.getUniformLocation(program,"view");
- loc.model=gl.getUniformLocation(program,"model");
- loc.color=gl.getUniformLocation(program,"color");
- gl.enableVertexAttribArray(loc.position);
- gl.vertexAttribPointer(loc.position,3,gl.FLOAT,false,0,0);
- gl.enable(gl.DEPTH_TEST);
-}
-
-function perspective(fov,aspect,near,far){
- let f=1/Math.tan(fov/2),nf=1/(near-far);
- return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*nf,-1,0,0,2*far*near*nf,0]);
-}
-function lookAt(eye,center,up){
- let z=norm(sub(eye,center)),x=norm(cross(up,z)),y=cross(z,x);
- return new Float32Array([
- x[0],y[0],z[0],0,x[1],y[1],z[1],0,
- x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1
- ]);
-}
-function sub(a,b){return a.map((v,i)=>v-b[i])}
-function dot(a,b){return a.reduce((s,v,i)=>s+v*b[i],0)}
-function cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
-function norm(a){let l=Math.hypot(...a)||1;return a.map(v=>v/l)}
-function modelMatrix(x,y,z,sx,sy,sz,angle=0){
- let c=Math.cos(angle),s=Math.sin(angle);
- return new Float32Array([
- c*sx,0,-s*sx,0,0,sy,0,0,s*sz,0,c*sz,0,x,y,z,1
- ]);
-}
-function cube(x,y,z,sx,sy,sz,color,angle=0){
- gl.uniformMatrix4fv(loc.model,false,modelMatrix(x,y,z,sx,sy,sz,angle));
- gl.uniform3fv(loc.color,color);
- gl.drawArrays(gl.TRIANGLES,0,36);
-}
-function resize(){
- canvas.width=innerWidth*devicePixelRatio;
- canvas.height=innerHeight*devicePixelRatio;
- gl.viewport(0,0,canvas.width,canvas.height);
-}
-addEventListener("resize",resize);
-if(gl)resize();
-
-function render(){
- if(!gl)return;
- gl.clearColor(.38,.65,.76,1);
- gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
- const aspect=canvas.width/canvas.height;
- gl.uniformMatrix4fv(loc.projection,false,perspective(.85,aspect,.1,500));
- let cam=[player.x+Math.sin(player.angle)*12,12,player.z+Math.cos(player.angle)*12];
- let target=[player.x,1,player.z];
- gl.uniformMatrix4fv(loc.view,false,lookAt(cam,target,[0,1,0]));
-
- // Ground and roads
- cube(0,-.6,0,230,.5,230,[.28,.43,.3]);
- for(let i=-100;i<=100;i+=30){
-  cube(i,-.28,0,3,.08,230,[.16,.19,.2]);
-  cube(0,-.27,i,230,.08,3,[.16,.19,.2]);
- }
- // Road markings
- for(let i=-100;i<=100;i+=12){
-  cube(i,-.18,0,.18,.04,230,[.75,.7,.43]);
-  cube(0,-.18,i,230,.04,.18,[.75,.7,.43]);
- }
- // Buildings
- buildings.forEach(b=>{
-  cube(b.x,b.h/2,b.z,b.w/2,b.h/2,b.d/2,b.color);
-  cube(b.x,b.h+.15,b.z,b.w*.53,.2,b.d*.53,[.22,.25,.29]);
-  cube(b.x,b.h*.45,b.z-b.d/2-.06,1.1,1.7,.12,[.08,.16,.2]);
-  for(let wx=-1;wx<=1;wx++){
-   cube(b.x+wx*3,b.h*.65,b.z-b.d/2-.09,.65,.65,.12,[.35,.75,.9]);
-  }
- });
- // Trees
- for(let x=-100;x<=100;x+=20){
-  for(let z=-100;z<=100;z+=20){
-   if(Math.random()<.04)continue;
-   let near=buildings.some(b=>Math.abs(b.x-x)<10&&Math.abs(b.z-z)<10);
-   if(!near){
-    cube(x,.9,z,.35,1.2,.35,[.35,.2,.1]);
-    cube(x,2.7,z,1.2,1.5,1.2,[.12,.4,.2]);
-   }
-  }
- }
- // Cars
- for(let i=0;i<5;i++){
-  let x=-70+i*30,z=18;
-  cube(x,.7,z,2.4,.7,1.2,[.65,.15,.12]);
-  cube(x,.95,z,1.2,.55,.95,[.2,.5,.7]);
- }
- // NPCs
- npcs.forEach(n=>{
-  cube(n.x,.9,n.z,.35,.9,.35,[.85,.65,.42],n.angle);
-  cube(n.x,1.75,n.z,.32,.32,.32,[.3,.2,.15]);
- });
- // Player
- if(!state.inside){
-  cube(player.x,.9,player.z,.42,.9,.42,[.12,.35,.95],player.angle);
-  cube(player.x,1.85,player.z,.34,.34,.34,[.8,.57,.4]);
- }
- requestAnimationFrame(render);
-}
-
-/* =========================
-   PLAYER MOVEMENT + COLLISION
-========================= */
-let inputX=0,inputY=0,last=performance.now();
-function blocked(x,z){
- return buildings.some(b=>
-  Math.abs(x-b.x)<b.w/2+1.1 &&
-  Math.abs(z-b.z)<b.d/2+1.1
- );
-}
-function move(dt){
- if(state.inside)return;
- let magnitude=Math.hypot(inputX,inputY);
- if(magnitude>.08){
-  let speed=state.carMode?12:5;
-  let dx=inputX/magnitude*speed*dt;
-  let dz=inputY/magnitude*speed*dt;
-  let nx=player.x+dx,nz=player.z+dz;
-  if(!blocked(nx,player.z))player.x=nx;
-  if(!blocked(player.x,nz))player.z=nz;
-  player.angle=Math.atan2(dx,dz);
-  state.energy=Math.max(0,state.energy-dt*.15);
- }
- player.x=Math.max(-110,Math.min(110,player.x));
- player.z=Math.max(-110,Math.min(110,player.z));
-}
-function gameLoop(t){
- let dt=Math.min((t-last)/1000,.05);last=t;
- if(state.gameStarted){
-  move(dt);
-  state.minute+=dt*3;
-  if(state.minute>=60){state.minute=0;state.hour++}
-  if(state.hour>=24){state.hour=0;state.day++;state.energy=Math.min(100,state.energy+35)}
-  state.hunger=Math.max(0,state.hunger-dt*.045);
-  if(state.hunger===0)state.health=Math.max(1,state.health-dt*.3);
-  updateHUD();
- }
- requestAnimationFrame(gameLoop);
-}
-
-/* =========================
-   TOUCH + KEYBOARD CONTROLS
-========================= */
-const joy=document.getElementById("joystick");
-const stick=document.getElementById("stick");
-let joyActive=false;
-function joystick(e){
- let r=joy.getBoundingClientRect();
- let cx=r.left+r.width/2,cy=r.top+r.height/2;
- let dx=e.clientX-cx,dy=e.clientY-cy;
- let max=43,l=Math.hypot(dx,dy);
- if(l>max){dx=dx/l*max;dy=dy/l*max}
- stick.style.left=(r.width/2-24+dx)+"px";
- stick.style.top=(r.height/2-24+dy)+"px";
- inputX=dx/max;inputY=dy/max;
-}
-joy.addEventListener("pointerdown",e=>{joyActive=true;joy.setPointerCapture(e.pointerId);joystick(e)});
-joy.addEventListener("pointermove",e=>{if(joyActive)joystick(e)});
-function stopJoy(){
- joyActive=false;inputX=0;inputY=0;
- stick.style.left="36px";stick.style.top="36px";
-}
-joy.addEventListener("pointerup",stopJoy);
-joy.addEventListener("pointercancel",stopJoy);
-let keys={};
-addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true});
-addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false});
-function keyboard(){
- if(keys.w||keys.arrowup)inputY=-1;
- else if(keys.s||keys.arrowdown)inputY=1;
- else if(!joyActive)inputY=0;
- if(keys.a||keys.arrowleft)inputX=-1;
- else if(keys.d||keys.arrowright)inputX=1;
- else if(!joyActive)inputX=0;
-}
-setInterval(keyboard,30);
-
-/* =========================
-   INTERACTION SYSTEM
-========================= */
-function nearest(){
- let best=null,dist=999;
- destinations.forEach(d=>{
-  let v=Math.hypot(player.x-d.x,player.z-d.z);
-  if(v<dist){dist=v;best=d}
- });
- return dist<17?best:null;
-}
-function interact(){
- if(state.inside){
-  state.inside=null;toast("You left the building.");
-  return;
- }
- let d=nearest();
- if(!d){
-  toast("Move closer to a building or destination.");
-  return;
- }
- openLocation(d);
-}
-document.getElementById("action").onclick=interact;
-
-function openLocation(d){
- const actions={
- market:()=>shop("market"),
- shop:()=>shop("shop"),
- restaurant:()=>shop("restaurant"),
- job:()=>jobs(),
- property:()=>property(),
- garage:()=>garage(),
- hospital:()=>hospital(),
- clothes:()=>shop("clothes"),
- electronics:()=>shop("electronics"),
- house:()=>home()
- };
- if(actions[d.type])actions[d.type]();
- else home();
-}
-function enterBuilding(name){
- state.inside=name;
- showPanel("🏢 "+name,`
- <p>You are inside ${name}. This is your building interior.</p>
- <button onclick="interact()">EXIT BUILDING</button>`);
-}
-function showPanel(title,html){
- const p=document.getElementById("panel");
- p.innerHTML=`<h2>${title}</h2>${html}<button onclick="closePanel()">CLOSE</button>`;
- p.style.display="block";
-}
-function closePanel(){document.getElementById("panel").style.display="none"}
-function toast(s){
- let t=document.getElementById("toast");
- t.textContent=s;t.style.display="block";
- clearTimeout(window.toastTimer);
- window.toastTimer=setTimeout(()=>t.style.display="none",2200);
-}
-
-/* =========================
-   MONEY + PROGRESSION
-========================= */
-function earn(n,reason){
- state.money+=n;state.xp+=Math.max(5,Math.floor(n/20));
- while(state.xp>=state.level*100){
-  state.xp-=state.level*100;state.level++;
-  toast("LEVEL UP! You reached level "+state.level);
- }
- toast(reason+" +₦"+n);
- updateHUD();save();
-}
-function spend(n,reason){
- if(state.money<n){toast("Not enough money!");return false}
- state.money-=n;toast(reason+" -₦"+n);updateHUD();save();return true;
-}
-function updateHUD(){
- document.getElementById("money").textContent="₦"+Math.floor(state.money).toLocaleString();
- document.getElementById("health").textContent=Math.floor(state.health);
- document.getElementById("energy").textContent=Math.floor(state.energy);
- document.getElementById("hunger").textContent=Math.floor(state.hunger);
- document.getElementById("level").textContent="LEVEL "+state.level+" · "+(state.level<5?"BEGINNER":state.level<10?"RISING STAR":"CITY LEGEND");
- document.getElementById("xp").textContent="XP: "+Math.floor(state.xp)+" / "+state.level*100;
- document.getElementById("location").textContent="DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(Math.floor(state.minute)).padStart(2,"0");
-}
-
-/* =========================
-   STORES
-========================= */
-const products={
- market:[["Rice bag",1800,"food"],["Bread",700,"food"],["Water",250,"food"],["Fruit pack",500,"food"]],
- shop:[["Groceries",1200,"food"],["Drinks",600,"food"],["House supplies",2500,"item"]],
- restaurant:[["Jollof rice",1500,"meal"],["Chicken meal",2200,"meal"],["Water",300,"drink"]],
- clothes:[["Casual outfit",4500,"clothes"],["Sneakers",6500,"clothes"],["Designer outfit",12000,"clothes"]],
- electronics:[["Headphones",8500,"item"],["Phone",45000,"item"],["Laptop",180000,"item"]]
-};
-function shop(type){
- let list=products[type]||[];
- let html="<p>Welcome. Select something to purchase.</p><div class='options'>";
- list.forEach((p,i)=>{
-  html+=`<button onclick="buyItem('${type}',${i})">${p[0]}<br>₦${p[1].toLocaleString()}</button>`;
- });
- html+="</div>";
- showPanel("🛍 "+type.toUpperCase(),html);
-}
-function buyItem(type,i){
- let p=products[type][i];
- if(!spend(p[1],"Purchase"))return;
- state.inventory.push(p[0]);
- if(p[2]==="food"||p[2]==="meal"||p[2]==="drink"){
-  state.hunger=Math.min(100,state.hunger+35);
- }
- if(p[2]==="clothes")state.clothes++;
- toast("Purchased "+p[0]);
- updateHUD();save();
-}
-
-/* =========================
-   JOBS
-========================= */
-function jobs(){
- showPanel("💼 CITY JOB CENTRE",`
- <p>Choose a job and earn money. Jobs can be repeated.</p>
- <div class="options">
- <button onclick="work('delivery')">📦 Delivery<br>₦1,200</button>
- <button onclick="work('shop')">🛒 Shop assistant<br>₦1,500</button>
- <button onclick="work('taxi')">🚕 Taxi driver<br>₦2,000</button>
- <button onclick="work('clean')">🧹 City cleaner<br>₦900</button>
- <button onclick="work('security')">🛡 Security shift<br>₦1,800</button>
- <button onclick="work('tech')">💻 Tech support<br>₦3,000</button>
- </div>`);
-}
-function work(job){
- if(state.energy<10){toast("You are too tired. Rest first.");return}
- let pay={delivery:1200,shop:1500,taxi:2000,clean:900,security:1800,tech:3000}[job];
- state.energy=Math.max(0,state.energy-12);
- state.job=job;
- earn(pay,"Job completed");
-}
-
-/* =========================
-   PROPERTY + VEHICLES
-========================= */
-function property(){
- showPanel("🏠 PROPERTY OFFICE",`
- <p>Start building your property portfolio.</p>
- <button onclick="buyHouse()">Buy starter house · ₦150,000</button>
- <p>Owning a house gives you a place to rest and recover.</p>`);
-}
-function buyHouse(){
- if(state.ownedHouse){toast("You already own a house.");return}
- if(spend(150000,"House purchase")){
-  state.ownedHouse=true;save();toast("Congratulations! You own a house.");
- }
-}
-function garage(){
- showPanel("🚘 AUTO GARAGE",`
- <p>Buy a vehicle to travel around the city faster.</p>
- <button onclick="buyCar()">Buy city car · ₦250,000</button>
- <button onclick="toggleCar()">Enter / Exit vehicle</button>`);
-}
-function buyCar(){
- if(state.ownedCar){toast("You already own a car.");return}
- if(spend(250000,"Vehicle purchase")){
-  state.ownedCar=true;save();toast("Your new car is ready!");
- }
-}
-function toggleCar(){
- if(!state.ownedCar){toast("You need to buy a car first.");return}
- state.carMode=!state.carMode;
- toast(state.carMode?"You entered your car.":"You left your car.");
-}
-function home(){
- if(!state.ownedHouse){
-  showPanel("🏡 RESIDENTIAL AREA",`<p>This house is not yours yet. Visit the property office to buy a home.</p>`);
-  return;
- }
- showPanel("🏠 YOUR HOME",`
- <p>Your personal home. Rest and recover.</p>
- <button onclick="rest()">🛏 Sleep</button>
- <button onclick="decorate()">🪑 Furnish house · ₦5,000</button>
- <button onclick="rest()">Relax</button>`);
-}
-function decorate(){
- if(spend(5000,"Furniture purchase"))state.inventory.push("Home furniture");
-}
-function rest(){
- state.energy=100;state.health=100;state.hunger=Math.max(30,state.hunger);
- state.hour=7;state.day++;
- updateHUD();save();toast("You rested. A new day begins.");
-}
-
-/* =========================
-   HOSPITAL
-========================= */
-function hospital(){
- showPanel("🏥 CITY HOSPITAL",`
- <p>Take care of your health.</p>
- <button onclick="heal()">Medical treatment · ₦2,000</button>`);
-}
-function heal(){
- if(spend(2000,"Treatment")){
-  state.health=100;updateHUD();save();
- }
-}
-
-/* =========================
-   MAP + DESTINATIONS
-========================= */
-function openMap(){
- const m=document.getElementById("map");m.style.display="block";
- const c=document.getElementById("mapcanvas"),ctx=c.getContext("2d");
- ctx.fillStyle="#29433b";ctx.fillRect(0,0,500,400);
- ctx.strokeStyle="#9da99b";ctx.lineWidth=12;
- for(let i=40;i<500;i+=100){
-  ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,400);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(500,i);ctx.stroke();
- }
- destinations.forEach(d=>{
-  let x=250+d.x*2,y=200+d.z*2;
-  ctx.fillStyle="#ffd36a";ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="white";ctx.font="10px Arial";ctx.fillText(d.name,x+8,y-5);
- });
- let px=250+player.x*2,pz=200+player.z*2;
- ctx.fillStyle="#41d9ff";ctx.beginPath();ctx.arc(px,pz,8,0,Math.PI*2);ctx.fill();
- if(state.destination){
-  ctx.strokeStyle="#41d9ff";ctx.lineWidth=3;
-  ctx.beginPath();ctx.moveTo(px,pz);ctx.lineTo(250+state.destination.x*2,200+state.destination.z*2);ctx.stroke();
- }
- const list=document.getElementById("maplist");list.innerHTML="";
- destinations.forEach((d,i)=>{
-  let b=document.createElement("button");
-  b.textContent=d.name;b.onclick=()=>setDestination(i);list.appendChild(b);
- });
-}
-function setDestination(i){
- state.destination=destinations[i];
- let d=state.destination;
- toast("Destination set: "+d.name);
- const distance=Math.round(Math.hypot(d.x-player.x,d.z-player.z));
- document.getElementById("maplist").insertAdjacentHTML("beforeend",
- `<p style="width:100%">📍 ${d.name} · About ${distance} metres away. Follow the blue route.</p>`);
- openMap();
-}
-function closeMap(){document.getElementById("map").style.display="none"}
-
-/* =========================
-   PHONE + INVENTORY
-========================= */
-function openMenu(type){
- if(type==="inventory"){
-  showPanel("🎒 INVENTORY",state.inventory.length?
-   "<p>"+state.inventory.map(x=>"• "+x).join("<br>")+"</p>":"<p>Your bag is empty.</p>");
- }else if(type==="phone"){
-  showPanel("📱 YOUR PHONE",`
-   <p>STREET LIFE mobile phone</p>
-   <button onclick="openMap()">🗺 City map</button>
-   <button onclick="jobs()">💼 Find work</button>
-   <button onclick="home()">🏠 Home</button>
-   <button onclick="showAchievements()">🏆 Achievements</button>`);
- }else{
-  save();toast("Game saved.");
- }
-}
-function showAchievements(){
- showPanel("🏆 ACHIEVEMENTS",`
- <p>LEVEL 5: Rising Star — ${state.level>=5?"UNLOCKED":"LOCKED"}</p>
- <p>FIRST PROPERTY — ${state.ownedHouse?"UNLOCKED":"LOCKED"}</p>
- <p>FIRST CAR — ${state.ownedCar?"UNLOCKED":"LOCKED"}</p>
- <p>FIRST PURCHASE — ${state.inventory.length?"UNLOCKED":"LOCKED"}</p>
- <p>CITY EXPLORER — ${state.level>=3?"UNLOCKED":"LOCKED"}</p>`);
-}
-
-/* =========================
-   SAVE SYSTEM
-========================= */
+let missionDone=[];
+function currentMission(){return missions[missionIndex]||null}
 function save(){
- try{
-  localStorage.setItem("streetLifeNaijaSave",JSON.stringify(state));
- }catch(e){toast("Saving is unavailable in this browser mode.");}
+ let data={player:{...player,car:player.car?cars.indexOf(player.car):null},missionIndex,missionStep,missionDone};
+ try{localStorage.setItem(saveKey,JSON.stringify(data));toast("Game saved on this device.");}catch(e){toast("Could not save. Device storage may be full.");}
 }
 function load(){
- try{
-  let data=JSON.parse(localStorage.getItem("streetLifeNaijaSave"));
-  if(data)Object.assign(state,data);
- }catch(e){}
- updateHUD();
+ try{let d=JSON.parse(localStorage.getItem(saveKey));if(!d)return false;
+ Object.assign(player,d.player);missionIndex=d.missionIndex||0;missionStep=d.missionStep||0;missionDone=d.missionDone||[];
+ player.car=null;return true;}catch(e){return false}
 }
-function resetGame(){
- if(confirm("Delete your saved game and start again?")){
-  localStorage.removeItem("streetLifeNaijaSave");location.reload();
+function reset(){player={x:450,y:450,vx:0,vy:0,angle:0,health:100,energy:100,money:3500,walk:0,car:null,home:false,inventory:[]};missionIndex=0;missionStep=0;missionDone=[];inside=null}
+function finishMission(){
+ let m=currentMission();if(!m)return;
+ player.money+=m.reward;missionDone.push(m.name);toast("MISSION COMPLETE! +₦"+m.reward.toLocaleString());
+ missionIndex++;missionStep=0;save();
+}
+function updateMission(){
+ let m=currentMission();if(!m)return;
+ if(m.type==="package"&&missionStep===0&&dist(player,m)<65){missionStep=1;player.inventory.push("Delivery package");toast("Package collected! Deliver it to the restaurant.");}
+ if(m.type==="deliver"&&player.inventory.includes("Delivery package")&&dist(player,m)<75){player.inventory=player.inventory.filter(x=>x!=="Delivery package");finishMission();}
+ if(m.type==="talk"&&missionStep===1)finishMission();
+ if(m.type==="garage"&&near&&near.type==="GARAGE")finishMission();
+ if(m.type==="home"&&player.home)finishMission();
+}
+function circleRect(x,y,r,b){
+ let px=clamp(x,b.x,b.x+b.w),py=clamp(y,b.y,b.y+b.h);
+ return Math.hypot(x-px,y-py)<r;
+}
+function blocked(x,y,r){
+ for(let b of buildings)if(circleRect(x,y,r,b))return true;
+ return false;
+}
+let input={x:0,y:0,run:false};
+const stick=$("stick"),nub=$("nub");let stickId=null;
+function setStick(e){let r=stick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,l=Math.hypot(dx,dy),m=Math.min(42,l);input.x=l?dx/l*m/42:0;input.y=l?dy/l*m/42:0;nub.style.left=(36+input.x*36)+"px";nub.style.top=(36+input.y*36)+"px";}
+stick.addEventListener("pointerdown",e=>{stickId=e.pointerId;stick.setPointerCapture(stickId);setStick(e)});
+stick.addEventListener("pointermove",e=>{if(e.pointerId===stickId)setStick(e)});
+function endStick(){stickId=null;input.x=input.y=0;nub.style.left="36px";nub.style.top="36px"}
+stick.addEventListener("pointerup",endStick);stick.addEventListener("pointercancel",endStick);
+$("run").addEventListener("pointerdown",()=>input.run=true);["pointerup","pointercancel","pointerleave"].forEach(ev=>$("run").addEventListener(ev,()=>input.run=false));
+const keys={};addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;if([" ","arrowup","arrowdown","arrowleft","arrowright"].includes(e.key.toLowerCase()))e.preventDefault()});
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+function keyboardInput(){let x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),y=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);if(Math.hypot(x,y)>0){input.x=x;input.y=y;}else if(stickId===null){input.x=0;input.y=0;}if(keys.shift)input.run=true;else if(stickId===null)input.run=false;}
+function closestDoor(){let best=null,bd=1e9;for(let d of doors){let n=dist(player,d);if(n<bd){bd=n;best=d}}return bd<65?best:null}
+function closestPerson(){let best=null,bd=1e9;for(let p of people){let n=dist(player,p);if(n<bd){bd=n;best=p}}return bd<55?best:null}
+function closestCar(){let best=null,bd=1e9;for(let c of cars){let n=dist(player,c);if(n<bd){bd=n;best=c}}return bd<65?best:null}
+function nearestThing(){if(inside)return {type:"EXIT"};let d=closestDoor(),p=closestPerson(),c=closestCar();near=null;
+ let opts=[d&&{type:d.type,obj:d,d:dist(player,d)},p&&{type:"PERSON",obj:p,d:dist(player,p)},c&&{type:"CAR",obj:c,d:dist(player,c)}].filter(Boolean).sort((a,b)=>a.d-b.d);
+ near=opts[0]||null;return near}
+function action(){
+ if(inside){inside=null;player.x=insideDoor.x;player.y=insideDoor.y+25;toast("You stepped outside.");return}
+ let n=nearestThing();if(!n){toast("Nothing nearby. Explore the city.");return}
+ if(n.type==="PERSON"){
+  if(currentMission()?.type==="talk"&&missionStep===0){missionStep=1;toast("Resident: Please visit the market office. Thanks for helping!");}
+  else toast(["Resident: Welcome to Lagos!","Resident: How far?","Resident: Business is moving today!"][Math.floor(Math.random()*3)]);
  }
+ else if(n.type==="HOUSE"||n.type==="SHOP"||n.type==="OFFICE"||n.type==="MALL"||n.type==="GARAGE"||n.type==="RESTAURANT"){
+  insideDoor=n.obj;inside={type:n.type,door:n.obj};toast("Entered "+n.type.toLowerCase()+". Use ACTION to leave.");
+ }
+ else if(n.type==="EXIT"){inside=null}
 }
-function startGame(){
- load();
- state.gameStarted=true;
- document.getElementById("start").style.display="none";
- toast("Welcome to your city. Explore and build your life!");
+let insideDoor=null;
+function enterVehicle(){
+ if(player.car){player.car=null;player.vx=0;player.vy=0;toast("You left the vehicle.");return}
+ let c=closestCar();if(!c){toast("Move closer to a vehicle.");return}
+ if(c.traffic){toast("That vehicle is moving in traffic. Find a parked car.");return}
+ player.car=c;c.speed=0;toast("Vehicle entered. Use joystick to drive.");
 }
-setInterval(()=>{if(state.gameStarted)save()},15000);
-addEventListener("beforeunload",save);
-
-/* =========================
-   START ENGINE
-========================= */
-if(gl)render();
-requestAnimationFrame(gameLoop);
-updateHUD();
+function createParkedCars(){for(let i=0;i<7;i++)cars.push({x:180+i*330,y:120+(i%2)*30,angle:0,speed:0,max:150,color:["#e5e5e5","#c44738","#2c7894","#d5ae4b"][i%4],traffic:false});}
+createParkedCars();
+function openShop(){
+ let d=closestDoor();if(inside){let t=inside.type;
+  let html="";
+  if(t==="SHOP"||t==="MALL")html="SHOP: Water ₦300, Food ₦700, Phone ₦25,000";
+  else if(t==="GARAGE")html="GARAGE: Vehicle service ₦1,000";
+  else if(t==="RESTAURANT")html="RESTAURANT: Meal ₦700";
+  else html="HOME: Rest and save your progress.";
+  let choice=prompt(html+"\nEnter item: water, food, phone, service, meal, rest, house");
+  if(!choice)return;choice=choice.toLowerCase().trim();
+  let prices={water:300,food:700,phone:25000,service:1000,meal:700};
+  if(choice==="house"){
+   if(player.home){toast("You already own a home.");return}
+   if(player.money<15000){toast("You need ₦15,000 to buy a home.");return}
+   player.money-=15000;player.home=true;toast("You bought a home! Your property is saved.");
+  }else if(choice==="rest"){
+   player.energy=100;player.health=100;toast("You rested. Health and energy restored.");
+  }else if(prices[choice]){
+   if(player.money<prices[choice]){toast("Not enough money.");return}
+   player.money-=prices[choice];
+   if(choice==="service"){if(player.car)player.car.speed=0;player.health=100;}
+   else if(choice==="meal"||choice==="food"){player.energy=100;player.health=Math.min(100,player.health+15);}
+   else player.inventory.push(choice);
+   toast(choice+" purchased.");
+  }else toast("That item is not available.");
+ }else if(d){toast("Go inside the building first to use its services.")}
+ else toast("Find a shop or building entrance.");
+}
+function openJobs(){
+ let m=currentMission();
+ if(!m){toast("All main missions completed! Explore the city and build your life.");return}
+ alert("MISSION "+(missionIndex+1)+"/"+missions.length+"\n"+m.name+"\n\n"+m.desc+"\n\nReward: ₦"+m.reward.toLocaleString());
+}
+$("action").onclick=action;$("car").onclick=enterVehicle;$("shop").onclick=openShop;$("jobs").onclick=openJobs;
+$("menuBtn").onclick=()=>{$("menu").style.display="flex";paused=true};
+$("start").onclick=()=>{reset();gameOn=true;paused=false;$("menu").style.display="none";toast("Welcome to Lagos! Your journey begins.");};
+$("continue").onclick=()=>{if(load()){gameOn=true;paused=false;$("menu").style.display="none";toast("Saved game loaded.");}else toast("No saved game found.");};
+function update(dt){
+ if(!gameOn||paused)return;
+ keyboardInput();
+ if(inside){
+  // Indoor movement in a separate room
+  let s=input.run?180:115;
+  player.x=clamp(player.x+input.x*s*dt,inside.door.x-85,inside.door.x+85);
+  player.y=clamp(player.y+input.y*s*dt,inside.door.y-100,inside.door.y+25);
+  if(Math.hypot(input.x,input.y)>.1)player.angle=Math.atan2(input.y,input.x);
+  return;
+ }
+ if(player.car){
+  let c=player.car,throttle=-input.y,steer=input.x;
+  c.speed+=throttle*115*dt;c.speed*=Math.pow(.985,dt*60);c.speed=clamp(c.speed,-45,c.max);
+  c.angle+=steer*(c.speed/90)*dt*2.1;
+  let nx=c.x+Math.cos(c.angle)*c.speed*dt,ny=c.y+Math.sin(c.angle)*c.speed*dt;
+  if(!blocked(nx,ny,17)){c.x=nx;c.y=ny}else{c.speed*=-.25;toast("Collision!");}
+  player.x=c.x;player.y=c.y;player.angle=c.angle;
+ }else{
+  let speed=input.run&&player.energy>0?190:125;
+  if(input.run&&Math.hypot(input.x,input.y)>.1)player.energy=Math.max(0,player.energy-15*dt);
+  else player.energy=Math.min(100,player.energy+7*dt);
+  let ax=input.x*speed,ay=input.y*speed;
+  player.vx+=(ax-player.vx)*Math.min(1,dt*9);player.vy+=(ay-player.vy)*Math.min(1,dt*9);
+  let nx=player.x+player.vx*dt,ny=player.y+player.vy*dt;
+  if(!blocked(nx,player.y,12))player.x=nx;else player.vx=0;
+  if(!blocked(player.x,ny,12))player.y=ny;else player.vy=0;
+  if(Math.hypot(player.vx,player.vy)>5){player.angle=Math.atan2(player.vy,player.vx);player.walk+=dt*10}
+ }
+ // pedestrians wander, avoid buildings and player
+ for(let p of people){
+  p.wait-=dt;if(p.wait<=0){p.angle+=rand(-1.5,1.5);p.wait=rand(1,4)}
+  let nx=p.x+Math.cos(p.angle)*24*dt,ny=p.y+Math.sin(p.angle)*24*dt;
+  if(!blocked(nx,ny,9)){p.x=nx;p.y=ny}else p.angle+=Math.PI*rand(.6,1.4);
+  p.walk+=dt*5;
+  if(dist(p,player)<25&&!player.car){p.angle=Math.atan2(p.y-player.y,p.x-player.x)}
+ }
+ // Traffic follows lanes and avoids buildings
+ for(let c of cars)if(c.traffic){
+  c.x+=Math.cos(c.angle)*c.speed*dt;c.y+=Math.sin(c.angle)*c.speed*dt;
+  if(c.x>citySize+20)c.x=-20;if(c.y>citySize+20)c.y=-20;
+  if(c.x<-20)c.x=citySize+20;if(c.y<-20)c.y=citySize+20;
+  if(Math.random()<.001)c.angle+=Math.PI/2;
+ }
+ camera.x+=(player.x-camera.x)*Math.min(1,dt*5);camera.y+=(player.y-camera.y)*Math.min(1,dt*5);
+ updateMission();
+}
+function drawPerson(p,isPlayer=false){
+ ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);
+ let swing=Math.sin(p.walk)*4;
+ // shadow
+ ctx.fillStyle="#0005";ctx.beginPath();ctx.ellipse(0,5,11,6,0,0,7);ctx.fill();
+ // legs
+ ctx.strokeStyle="#242b30";ctx.lineWidth=5;ctx.lineCap="round";
+ ctx.beginPath();ctx.moveTo(-3,2);ctx.lineTo(-4+swing,12);ctx.moveTo(3,2);ctx.lineTo(4-swing,12);ctx.stroke();
+ // body and arms
+ ctx.fillStyle=isPlayer?"#39b88b":p.shirt;ctx.fillRect(-7,-8,14,14);
+ ctx.strokeStyle=p.skin||"#75452e";ctx.lineWidth=4;
+ ctx.beginPath();ctx.moveTo(-6,-5);ctx.lineTo(-10-swing*.4,3);ctx.moveTo(6,-5);ctx.lineTo(10+swing*.4,3);ctx.stroke();
+ // head
+ ctx.fillStyle=p.skin||"#75452e";ctx.beginPath();ctx.arc(0,-12,6,0,7);ctx.fill();
+ ctx.fillStyle="#181818";ctx.fillRect(-5,-17,10,3);
+ ctx.restore();
+}
+function drawCar(c){
+ ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.angle);
+ ctx.fillStyle="#0005";ctx.fillRect(-18,-8,40,22);
+ ctx.fillStyle=c.color;ctx.fillRect(-20,-11,40,20);
+ ctx.fillStyle="#1c303b";ctx.fillRect(-9,-9,18,16);
+ ctx.fillStyle="#a8c9d2";ctx.fillRect(-7,-8,14,6);
+ ctx.fillStyle="#fff4bd";ctx.fillRect(17,-8,3,5);ctx.fillRect(17,3,3,5);
+ ctx.fillStyle="#222";ctx.fillRect(-13,-13,8,4);ctx.fillRect(8,-13,8,4);ctx.fillRect(-13,9,8,4);ctx.fillRect(8,9,8,4);
+ ctx.restore();
+}
+function drawBuilding(b){
+ ctx.fillStyle="#0003";ctx.fillRect(b.x+7,b.y+9,b.w,b.h);
+ ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,b.w,b.h);
+ ctx.fillStyle=b.roof;ctx.fillRect(b.x+5,b.y+5,b.w-10,b.h-10);
+ ctx.fillStyle="#b7d2d0";
+ for(let x=b.x+15;x<b.x+b.w-10;x+=30)for(let y=b.y+18;y<b.y+b.h-10;y+=30){ctx.fillRect(x,y,13,15)}
+ ctx.fillStyle="#503c2e";ctx.fillRect(b.x+b.w/2-9,b.y+b.h-18,18,18);
+ ctx.fillStyle="#f5d46a";ctx.font="bold 9px Arial";ctx.textAlign="center";ctx.fillText(b.type,b.x+b.w/2,b.y-5);
+}
+function render(){
+ ctx.clearRect(0,0,W,H);
+ let ox=W/2-camera.x,oy=H/2-camera.y;
+ ctx.save();ctx.translate(ox,oy);
+ ctx.fillStyle="#5d8659";ctx.fillRect(0,0,citySize,citySize);
+ // grass texture
+ ctx.fillStyle="#ffffff0b";for(let i=0;i<220;i++){let x=(i*137)%citySize,y=(i*251)%citySize;ctx.fillRect(x,y,3,3)}
+ // roads
+ for(let r of roads){ctx.fillStyle="#44494c";ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle="#e2d6a055";
+  if(r.w<r.h){for(let y=r.y;y<r.y+r.h;y+=38)ctx.fillRect(r.x+48,y,3,18)}
+  else{for(let x=r.x;x<r.x+r.w;x+=38)ctx.fillRect(x,r.y+48,18,3)}
+ }
+ // sidewalks
+ for(let r of roads){ctx.fillStyle="#a8a59b";if(r.w<r.h){ctx.fillRect(r.x-7,r.y,7,r.h);ctx.fillRect(r.x+r.w,r.y,7,r.h)}else{ctx.fillRect(r.x,r.y-7,r.w,7);ctx.fillRect(r.x,r.y+r.h,r.w,7)}}
+ if(inside){
+  ctx.fillStyle="#a17d56";ctx.fillRect(inside.door.x-110,inside.door.y-115,220,160);
+  ctx.fillStyle="#d7bd91";ctx.fillRect(inside.door.x-100,inside.door.y-105,200,140);
+  ctx.fillStyle="#6b4b35";ctx.fillRect(inside.door.x-35,inside.door.y-90,70,25);
+  ctx.fillStyle="#3f756e";ctx.fillRect(inside.door.x-80,inside.door.y-50,45,35);
+  ctx.fillStyle="#8b6c4a";ctx.fillRect(inside.door.x+30,inside.door.y-45,45,40);
+  ctx.fillStyle="#222";ctx.font="bold 15px Arial";ctx.textAlign="center";ctx.fillText(inside.type,inside.door.x,inside.door.y-125);
+  drawPerson(player,true);
+ }else{
+  for(let b of buildings)drawBuilding(b);
+  for(let d of doors){ctx.fillStyle="#f4d35e";ctx.beginPath();ctx.arc(d.x,d.y,5,0,7);ctx.fill()}
+  for(let c of cars)drawCar(c);
+  for(let p of people)drawPerson(p);
+  // mission marker
+  let m=currentMission();if(m){ctx.strokeStyle="#ffe15b";ctx.lineWidth=3;ctx.beginPath();ctx.arc(m.x,m.y,18+Math.sin(Date.now()/180)*4,0,7);ctx.stroke();ctx.fillStyle="#ffe15b";ctx.font="bold 12px Arial";ctx.textAlign="center";ctx.fillText("MISSION",m.x,m.y-27)}
+  // package marker
+  if(missionIndex===0&&missionStep===0){ctx.fillStyle="#f0cf35";ctx.fillRect(690,360,18,18);ctx.fillStyle="#222";ctx.fillRect(695,365,8,8)}
+  drawPerson(player,true);
+ }
+ ctx.restore();
+ // minimap
+ mc.clearRect(0,0,100,100);mc.fillStyle="#294b39";mc.fillRect(0,0,100,100);mc.fillStyle="#555";for(let i=0;i<=10;i++){mc.fillRect(i*10-2,0,4,100);mc.fillRect(0,i*10-2,100,4)}
+ mc.fillStyle="#e2c77c";for(let b of buildings)mc.fillRect(b.x/citySize*100,b.y/citySize*100,2,2);
+ mc.fillStyle="#fff";mc.beginPath();mc.arc(player.x/citySize*100,player.y/citySize*100,3,0,7);mc.fill();
+ let m=currentMission();if(m){mc.fillStyle="#ffe15b";mc.beginPath();mc.arc(m.x/citySize*100,m.y/citySize*100,3,0,7);mc.fill()}
+ let speed=player.car?Math.abs(Math.round(player.car.speed))+" km/h":"On foot";
+ $("stats").innerHTML="₦"+player.money.toLocaleString()+"<br>Health: "+Math.round(player.health)+" | Energy: "+Math.round(player.energy)+"<br>"+speed+"<br>Items: "+player.inventory.length;
+ let mm=currentMission();$("mission").innerHTML=mm?"MISSION "+(missionIndex+1)+"/"+missions.length+"<br>"+mm.name:"ALL MAIN MISSIONS COMPLETE<br>Free roam";
+ if(!inside){let n=nearestThing();$("hint").textContent=n?(n.type==="PERSON"?"ACTION: Talk to resident":n.type==="CAR"?"VEHICLE: Enter parked car":"ACTION: Enter "+n.type.toLowerCase()):"Explore Lagos • Find the yellow mission marker";}
+ else $("hint").textContent="Inside "+inside.type+" • ACTION to exit";
+}
+let last=performance.now();
+function loop(now){let dt=Math.min(.04,(now-last)/1000);last=now;update(dt);render();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+setInterval(()=>{if(gameOn&&!paused)try{localStorage.setItem(saveKey,JSON.stringify({player:{...player,car:null},missionIndex,missionStep,missionDone}))}catch(e){}},15000);
+})();
 </script>
 </body>
 </html>
