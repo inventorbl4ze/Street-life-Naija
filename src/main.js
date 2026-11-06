@@ -136,6 +136,12 @@ function buildInterior(kind){
   for(let i=0;i<5;i++)furniture('Chair',-5+(i%3)*5,-4+Math.floor(i/3)*6,.8);
  }else if(kind==='BED STORE'){
   furniture('Bed',-3,0,.8);furniture('Bed',3,0,.8);
+ }else if(kind==='SOFA STORE'){
+  furniture('Sofa',-3,0,.8);furniture('Sofa',3,0,.8);
+ }else if(kind==='TABLE STORE'){
+  furniture('Table',-3,0,.8);furniture('Table',3,0,.8);
+ }else if(kind==='ELECTRONICS STORE'){
+  furniture('TV',-3,0,.8);furniture('TV',3,0,.8);
  }else if(kind==='FOOD STORE'||kind==='SUPERMARKET'){
   for(let row=0;row<3;row++){box(interiorGroup,1,2.2,10,wood,-5+row*5,1.2,-1);for(let z=-4;z<=3;z+=2)box(interiorGroup,.8,.7,.8,mat([0xd6a23d,0x9d4e3e,0x4f9a72][(row+z+8)%3]),-5+row*5,2.5,z);}
   box(interiorGroup,4,1.2,1.4,dark,0,.8,6);
@@ -162,7 +168,10 @@ function exitBuilding(){state.inside=false;player.position.copy(state.outsidePos
 function openStore(kind){
  const catalogs={
   'CHAIR STORE':[{name:'Wooden Chair',price:120},{name:'Modern Chair',price:250},{name:'Office Chair',price:450}],
-  'BED STORE':[{name:'Single Bed',price:900},{name:'Double Bed',price:1500},{name:'Luxury Bed',price:2600}],\n  'SOFA STORE':[{name:'Two-seat Sofa',price:1100},{name:'Family Sofa',price:1900},{name:'Luxury Sofa',price:3200}],\n  'TABLE STORE':[{name:'Coffee Table',price:250},{name:'Dining Table',price:700},{name:'Office Table',price:550}],\n  'ELECTRONICS STORE':[{name:'Flat-screen TV',price:1200},{name:'Home Sound System',price:800},{name:'Gaming Console',price:1800}],
+  'BED STORE':[{name:'Single Bed',price:900},{name:'Double Bed',price:1500},{name:'Luxury Bed',price:2600}],
+  'SOFA STORE':[{name:'Two-seat Sofa',price:1100},{name:'Family Sofa',price:1900},{name:'Luxury Sofa',price:3200}],
+  'TABLE STORE':[{name:'Coffee Table',price:250},{name:'Dining Table',price:700},{name:'Office Table',price:550}],
+  'ELECTRONICS STORE':[{name:'Flat-screen TV',price:1200},{name:'Home Sound System',price:800},{name:'Gaming Console',price:1800}],
   'FOOD STORE':[{name:'Bread and groceries',price:18},{name:'Fruit basket',price:25},{name:'Family food pack',price:55}],
   'SUPERMARKET':[{name:'Grocery basket',price:45},{name:'Cleaning supplies',price:30},{name:'Kitchen essentials',price:75}],
   'RESTAURANT':[{name:'Lunch meal',price:22},{name:'Dinner meal',price:35},{name:'Family meal',price:70}],
