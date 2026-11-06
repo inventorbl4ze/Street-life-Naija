@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>STREET LIFE: NAIJA</title>
+<title>CITY LIFE: UNLIMITED</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#101820;color:white;font-family:Arial;overflow:hidden;touch-action:none}
 canvas{display:block;width:100vw;height:100dvh;background:#527b54}
@@ -31,7 +31,7 @@ h1{font-size:25px;margin:0 0 5px;color:#73e0b3}h2{font-size:17px;margin:14px 0 7
 <canvas id="game"></canvas>
 <div id="hud">
  <div class="panel" id="stats">₦0<br>Health: 100<br>Energy: 100</div>
- <div class="panel" id="mission">STREET LIFE: NAIJA<br>Explore Lagos</div>
+ <div class="panel" id="mission">CITY LIFE: UNLIMITED<br>Explore the city</div>
 </div>
 <canvas id="map" width="100" height="100"></canvas>
 <div id="toast"></div>
@@ -49,8 +49,8 @@ h1{font-size:25px;margin:0 0 5px;color:#73e0b3}h2{font-size:17px;margin:14px 0 7
 </div>
 <div id="menu">
  <div id="menuCard">
-  <h1>STREET LIFE: NAIJA</h1>
-  <p>A Lagos city-life adventure. Explore, work, earn money, buy property and vehicles, and complete missions.</p>
+  <h1>CITY LIFE: UNLIMITED</h1>
+  <p>A living city adventure. Explore, work, earn money, buy property and vehicles, and complete missions.</p>
   <button class="menuBtn" id="start">▶ START GAME</button>
   <button class="menuBtn" id="continue">↻ CONTINUE SAVED GAME</button>
   <h2>How to play</h2>
@@ -70,7 +70,7 @@ const $=id=>document.getElementById(id);
 let toastTimer;
 function toast(s){$("toast").textContent=s;$("toast").style.display="block";clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").style.display="none",2200)}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),rand=(a,b)=>a+Math.random()*(b-a);
-const saveKey="streetLifeNaijaSaveV2";
+const saveKey="cityLifeUnlimitedSaveV1";
 let gameOn=false,paused=false,inside=null,near=null,missionIndex=0,missionStep=0;
 let player={x:450,y:450,vx:0,vy:0,angle:0,health:100,energy:100,money:3500,walk:0,car:null,home:false,inventory:[]};
 let camera={x:450,y:450};
@@ -169,7 +169,7 @@ function action(){
  let n=nearestThing();if(!n){toast("Nothing nearby. Explore the city.");return}
  if(n.type==="PERSON"){
   if(currentMission()?.type==="talk"&&missionStep===0){missionStep=1;toast("Resident: Please visit the market office. Thanks for helping!");}
-  else toast(["Resident: Welcome to Lagos!","Resident: How far?","Resident: Business is moving today!"][Math.floor(Math.random()*3)]);
+  else toast(["Resident: Welcome to the city!","Resident: How far?","Resident: Business is moving today!"][Math.floor(Math.random()*3)]);
  }
  else if(n.type==="HOUSE"||n.type==="SHOP"||n.type==="OFFICE"||n.type==="MALL"||n.type==="GARAGE"||n.type==="RESTAURANT"){
   insideDoor=n.obj;inside={type:n.type,door:n.obj};toast("Entered "+n.type.toLowerCase()+". Use ACTION to leave.");
@@ -219,7 +219,7 @@ function openJobs(){
 }
 $("action").onclick=action;$("car").onclick=enterVehicle;$("shop").onclick=openShop;$("jobs").onclick=openJobs;
 $("menuBtn").onclick=()=>{$("menu").style.display="flex";paused=true};
-$("start").onclick=()=>{reset();gameOn=true;paused=false;$("menu").style.display="none";toast("Welcome to Lagos! Your journey begins.");};
+$("start").onclick=()=>{reset();gameOn=true;paused=false;$("menu").style.display="none";toast("Welcome to CITY LIFE: UNLIMITED! Your journey begins.");};
 $("continue").onclick=()=>{if(load()){gameOn=true;paused=false;$("menu").style.display="none";toast("Saved game loaded.");}else toast("No saved game found.");};
 function update(dt){
  if(!gameOn||paused)return;
