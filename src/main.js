@@ -64,7 +64,7 @@ function makeCar(x,z,color,parked=true){const g=new THREE.Group();g.position.set
 const cars=[];for(let i=0;i<12;i++){const c=makeCar(-260+Math.random()*520,(i%4)*55-82.5,[0xd04c3e,0xe2e0d5,0x267a99,0x272b31,0xc6a340][i%5]);c.group.rotation.y=(i%2)*Math.PI/2;cars.push(c);}
 for(let i=0;i<8;i++){const c=makeCar(-260+i*72,-28,[0xc54c3f,0xd6d7d0,0x1c718b,0x272a30][i%4],false);c.speed=4+Math.random()*3;cars.push(c);}
 const people=[];for(let i=0;i<24;i++){const p=new THREE.Group();const top=new THREE.Mesh(new THREE.CapsuleGeometry(.23,.55,3,6),mat([0xd6a23d,0xb95648,0x397e80,0xd2d2cb,0x70589a][i%5]));top.position.y=1.05;p.add(top);const h=new THREE.Mesh(new THREE.SphereGeometry(.19,8,7),skin);h.position.y=1.75;p.add(h);p.position.set(-285+Math.random()*570,0,-125+Math.random()*250);city.add(p);people.push({mesh:p,angle:Math.random()*Math.PI*2,turn:1+Math.random()*3});}
-const state={started:false,driving:null,money:50000,energy:100,ownsHome:false,inventory:[],furniture:[],activeJob:null,inside:false,outsidePosition:null};
+const state={started:false,driving:null,money:50000,energy:100,ownsHome:false,inventory:[],furniture:[],activeJob:null,inside:false,outsidePosition:null,bankBalance:0};
 const saveKey='cityLife3DSaveV2';
 const jobs=[
  {name:'Neighbourhood delivery',pay:160,x:78,z:-92,detail:'Deliver a parcel to the apartment block'},
@@ -95,8 +95,8 @@ $('city-menu').onclick=()=>openPanel('City services','Manage your growing life i
  {label:'Save progress',run:()=>{closePanel();save();}}
 ]);
 function notify(s){$('toast').textContent=s;$('toast').style.display='block';clearTimeout(notify.t);notify.t=setTimeout(()=>$('toast').style.display='none',2200);}
-function save(showMessage=true){try{localStorage.setItem(saveKey,JSON.stringify({money:state.money,player:{x:player.position.x,z:player.position.z},energy:state.energy,ownsHome:state.ownsHome,inventory:state.inventory,furniture:state.furniture,activeJob:state.activeJob}));if(showMessage)notify('Progress saved on this device.');}catch{notify('Unable to save.');}}
-function load(){try{const d=JSON.parse(localStorage.getItem(saveKey));if(!d)return false;state.money=d.money??50000;state.energy=d.energy??100;state.ownsHome=!!d.ownsHome;state.inventory=d.inventory||[];state.furniture=d.furniture||[];state.activeJob=d.activeJob||null;player.position.set(d.player?.x||0,0,d.player?.z||4);return true;}catch{return false;}}
+function save(showMessage=true){try{localStorage.setItem(saveKey,JSON.stringify({money:state.money,player:{x:player.position.x,z:player.position.z},energy:state.energy,ownsHome:state.ownsHome,inventory:state.inventory,furniture:state.furniture,bankBalance:state.bankBalance,activeJob:state.activeJob}));if(showMessage)notify('Progress saved on this device.');}catch{notify('Unable to save.');}}
+function load(){try{const d=JSON.parse(localStorage.getItem(saveKey));if(!d)return false;state.money=d.money??50000;state.energy=d.energy??100;state.ownsHome=!!d.ownsHome;state.inventory=d.inventory||[];state.furniture=d.furniture||[];state.bankBalance=d.bankBalance||0;state.activeJob=d.activeJob||null;player.position.set(d.player?.x||0,0,d.player?.z||4);return true;}catch{return false;}}
 function collides(x,z,r=.8){return solidBuildings.some(b=>Math.abs(x-b.x)<b.w/2+r&&Math.abs(z-b.z)<b.d/2+r);}
 const input={x:0,y:0,sprint:false};let pointer=null;const stick=$('stick'),nub=$('nub');
 function moveStick(e){const r=stick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,len=Math.hypot(dx,dy),k=Math.min(1,len/43);input.x=len?dx/len*k:0;input.y=len?dy/len*k:0;nub.style.left=(35+input.x*36)+'px';nub.style.top=(35+input.y*36)+'px';}
@@ -156,9 +156,30 @@ function buildInterior(kind){
   box(interiorGroup,10,1.2,1.3,wood,0,.8,-3);for(let x=-4;x<=4;x+=2)box(interiorGroup,.7,1.2,.55,mat(0x4e9a82),x,1.9,-3);box(interiorGroup,3,1.1,2,dark,0,.7,4);
  }
 }
-function enterBuilding(kind){state.outsidePosition=player.position.clone();state.inside=true;state.insideKind=kind;buildInterior(kind);player.position.set(520,0,521);player.rotation.y=Math.PI;if(state.driving){state.driving.occupied=false;state.driving=null;}player.visible=true;closePanel();notify('You entered the '+(kind==='SHOP'?'shop':'building')+'. Press ACTION to leave.');}
+function enterBuilding(kind){state.outsidePosition=player.position.clone();state.inside=true;state.insideKind=kind;buildInterior(kind);player.position.set(520,0,521);player.rotation.y=Math.PI;if(state.driving){state.driving.occupied=false;state.driving=null;}player.visible=true;closePanel();notify('You entered the '+kind.toLowerCase()+'. Press ACTION to leave.');}
 function exitBuilding(){state.inside=false;player.position.copy(state.outsidePosition||new THREE.Vector3(0,0,4));state.outsidePosition=null;notify('You stepped back outside.');}
 
+function openStore(kind){
+ const catalogs={
+  'CHAIR STORE':[{name:'Wooden Chair',price:120},{name:'Modern Chair',price:250},{name:'Office Chair',price:450}],
+  'BED STORE':[{name:'Single Bed',price:900},{name:'Double Bed',price:1500},{name:'Luxury Bed',price:2600}],
+  'FOOD STORE':[{name:'Bread and groceries',price:18},{name:'Fruit basket',price:25},{name:'Family food pack',price:55}],
+  'SUPERMARKET':[{name:'Grocery basket',price:45},{name:'Cleaning supplies',price:30},{name:'Kitchen essentials',price:75}],
+  'RESTAURANT':[{name:'Lunch meal',price:22},{name:'Dinner meal',price:35},{name:'Family meal',price:70}],
+  'MALL':[{name:'New outfit',price:180},{name:'Headphones',price:95},{name:'Home decoration set',price:210}],
+  'SHOP':[{name:'Bottled water',price:3},{name:'Meal pack',price:7},{name:'Mobile phone',price:80}]
+ };
+ const items=catalogs[kind]||catalogs.SHOP;
+ const opts=[{label:'Walk inside',run:()=>enterBuilding(kind)}];
+ items.forEach(item=>opts.push({label:item.name+' · $'+item.price.toLocaleString('en-US'),run:()=>{
+  if(state.money<item.price){notify('Not enough money.');return;}
+  state.money-=item.price;
+  if(kind==='CHAIR STORE'||kind==='BED STORE')state.furniture.push(item.name);
+  else state.inventory.push(item.name);
+  closePanel();notify('Purchased '+item.name+'.');save(false);
+ }}));
+ openPanel(kind,kind==='CHAIR STORE'||kind==='BED STORE'?'Buy furniture for your home. Purchased furniture will appear when you enter a residence.':'Choose items to buy, or walk inside to explore the building.',opts);
+}
 function interact(){
  if(state.inside){exitBuilding();return;}
  if(state.driving){notify('Leave the vehicle before interacting.');return;}
@@ -167,21 +188,31 @@ function interact(){
  let nearestBuilding=null,bd=18;
  for(const b of solidBuildings){const d=Math.hypot(player.position.x-b.x,player.position.z-b.z);if(d<bd){bd=d;nearestBuilding=b;}}
  if(nearestBuilding&&bd<Math.min(pd,18)){
-  if(nearestBuilding.kind==='SHOP'){
-   openPanel('Corner shop','Enter to explore this shop, or buy an everyday item.',[
-    {label:'Enter shop',run:()=>enterBuilding('SHOP')},
-    {label:'Bottled water · $3',run:()=>buyItem('Bottled water',3)},
-    {label:'Meal pack · $7',run:()=>buyItem('Meal pack',7)},
-    {label:'Mobile phone · $80',run:()=>buyItem('Mobile phone',80)}
-   ]);
-  }else{
+  const kind=nearestBuilding.kind;
+  if(kind==='RESIDENCE'){
    openPanel('Residential building',state.ownsHome?'Explore this residence. You already own a starter home.':'A starter home is available for $15,000.',[
-    {label:'Enter building',run:()=>enterBuilding('HOME')},
+    {label:'Enter residence',run:()=>enterBuilding('HOME')},
     {label:state.ownsHome?'Home already owned':'Buy starter home · $15,000',run:()=>{if(state.ownsHome){notify('You already own a home.');return;}if(state.money<15000){notify('Not enough money. Try the job board.');return;}state.money-=15000;state.ownsHome=true;closePanel();notify('You bought your first home!');save(false);}}
    ]);
-  }
+  }else if(kind==='BANK'){
+   openPanel('City bank','Account balance: $'+state.bankBalance.toLocaleString('en-US'),[
+    {label:'Deposit $1,000',run:()=>{if(state.money<1000){notify('You need $1,000 cash.');return;}state.money-=1000;state.bankBalance+=1000;closePanel();notify('Deposit complete.');save(false);}},
+    {label:'Withdraw $1,000',run:()=>{if(state.bankBalance<1000){notify('Your account needs at least $1,000.');return;}state.bankBalance-=1000;state.money+=1000;closePanel();notify('Withdrawal complete.');save(false);}},
+    {label:'Enter bank',run:()=>enterBuilding('BANK')}
+   ]);
+  }else if(kind==='HOSPITAL'){
+   openPanel('City hospital','A safe place to rest and recover energy.',[
+    {label:'Rest and recover · $100',run:()=>{if(state.money<100){notify('Not enough money.');return;}state.money-=100;state.energy=100;closePanel();notify('You are rested and ready to go.');save(false);}},
+    {label:'Enter hospital',run:()=>enterBuilding('HOSPITAL')}
+   ]);
+  }else if(kind==='RESTAURANT'){
+   openPanel('Restaurant','Order a meal or explore the dining room.',[
+    {label:'Buy meal · $22',run:()=>{if(state.money<22){notify('Not enough money.');return;}state.money-=22;state.energy=Math.min(100,state.energy+35);state.inventory.push('Restaurant meal');closePanel();notify('Meal served. Energy restored.');save(false);}},
+    {label:'Enter restaurant',run:()=>enterBuilding('RESTAURANT')}
+   ]);
+  }else openStore(kind);
  }else if(nearestPerson&&pd<5){openPanel('City resident','Resident: Welcome! There is honest work on the job board if you need to earn money.',[{label:'Thanks!',run:closePanel},{label:'Find local work',run:openJobs}]);}
- else notify('Nothing close enough. Walk near a resident, shop or home.');
+ else notify('Nothing close enough. Walk near a resident, shop or building entrance.');
 }
 function buyItem(name,cost){if(state.money<cost){notify('Not enough money for that item.');return;}state.money-=cost;state.inventory.push(name);closePanel();notify(name+' purchased.');save(false);}
 $('interact').onclick=interact;
