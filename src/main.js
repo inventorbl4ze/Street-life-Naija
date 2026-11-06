@@ -40,7 +40,7 @@ function building(x,z,w,d,h,color,kind){
 }
 function roadX(x,z,len){box(city,13,.12,len,road,x,0,z,false);for(let p=-len/2+7;p<len/2;p+=12)box(city,.16,.03,4,line,x,.08,z+p,false);}
 function roadZ(x,z,len){box(city,len,.12,13,road,x,0,z,false);for(let p=-len/2+7;p<len/2;p+=12)box(city,4,.03,.16,line,x+p,.08,z,false);}
-for(let i=-5;i<=5;i++){roadX(i*55,0,300);roadZ(0,i*55,300);}
+for(let i=-5;i<=5;i++){roadX(i*55,0,600);roadZ(0,i*55,600);}
 for(let x=-275;x<=275;x+=55)for(let z=-275;z<=275;z+=55)for(let side=0;side<2;side++){
  const bx=x+(side?15:-15),bz=z+15,w=18+((Math.abs(x+z)+side*7)%8),d=17+((Math.abs(x-z)+side*5)%7),h=12+((Math.abs(x*3+z*2)+side*11)%35);
  building(bx,bz,w,d,h,[0xb9a080,0x9babb0,0xc5b49a,0x8e9b83,0xb47f67][(Math.abs(x+z+side*3)/5|0)%5],side?'SHOP':'RESIDENCE');
