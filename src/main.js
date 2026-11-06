@@ -117,7 +117,7 @@ function buildInterior(kind){
  if(kind==='SHOP'){box(interiorGroup,10,1.2,1.3,wood,0,.8,-3);for(let x=-4;x<=4;x+=2)box(interiorGroup,.7,1.2,.55,mat(0x4e9a82),x,1.9,-3);box(interiorGroup,3,1.1,2,dark,0,.7,4);}
  else{box(interiorGroup,5,.8,2.4,mat(0x577b82),-3,.65,2);box(interiorGroup,5,.35,2.4,mat(0xd2c5a7),-3,1.2,2);box(interiorGroup,2,.8,2,wood,5,.5,-3);box(interiorGroup,2,.15,2,mat(0x7a9caa),5,1,-3);}
 }
-function enterBuilding(kind){state.outsidePosition=player.position.clone();state.inside=true;state.insideKind=kind;buildInterior(kind);player.position.set(520,0,1);player.rotation.y=Math.PI;if(state.driving){state.driving.occupied=false;state.driving=null;}player.visible=true;closePanel();notify('You entered the '+(kind==='SHOP'?'shop':'building')+'. Press ACTION to leave.');}
+function enterBuilding(kind){state.outsidePosition=player.position.clone();state.inside=true;state.insideKind=kind;buildInterior(kind);player.position.set(520,0,521);player.rotation.y=Math.PI;if(state.driving){state.driving.occupied=false;state.driving=null;}player.visible=true;closePanel();notify('You entered the '+(kind==='SHOP'?'shop':'building')+'. Press ACTION to leave.');}
 function exitBuilding(){state.inside=false;player.position.copy(state.outsidePosition||new THREE.Vector3(0,0,4));state.outsidePosition=null;notify('You stepped back outside.');}
 
 function interact(){
