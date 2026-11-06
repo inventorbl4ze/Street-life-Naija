@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import './style.css';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
