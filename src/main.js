@@ -41,9 +41,13 @@ function building(x,z,w,d,h,color,kind){
 function roadX(x,z,len){box(city,13,.12,len,road,x,0,z,false);for(let p=-len/2+7;p<len/2;p+=12)box(city,.16,.03,4,line,x,.08,z+p,false);}
 function roadZ(x,z,len){box(city,len,.12,13,road,x,0,z,false);for(let p=-len/2+7;p<len/2;p+=12)box(city,4,.03,.16,line,x+p,.08,z,false);}
 for(let i=-5;i<=5;i++){roadX(i*55,0,600);roadZ(0,i*55,600);}
+const landmarkKinds=['SUPERMARKET','RESTAURANT','BANK','HOSPITAL','MALL','CHAIR STORE','BED STORE','FOOD STORE'];
+let landmarkIndex=0;
 for(let x=-275;x<=275;x+=55)for(let z=-275;z<=275;z+=55)for(let side=0;side<2;side++){
  const bx=x+(side?15:-15),bz=z+15,w=18+((Math.abs(x+z)+side*7)%8),d=17+((Math.abs(x-z)+side*5)%7),h=12+((Math.abs(x*3+z*2)+side*11)%35);
- building(bx,bz,w,d,h,[0xb9a080,0x9babb0,0xc5b49a,0x8e9b83,0xb47f67][(Math.abs(x+z+side*3)/5|0)%5],side?'SHOP':'RESIDENCE');
+ const special=(z===-275&&side===0&&x>=-275&&x<=110)?landmarkKinds[(x+275)/55]:null;
+ const kind=special|| (side?'SHOP':'RESIDENCE');
+ building(bx,bz,w,d,h,[0xb9a080,0x9babb0,0xc5b49a,0x8e9b83,0xb47f67][(Math.abs(x+z+side*3)/5|0)%5],kind);
 }
 const trunk=mat(0x65452f),leaves=mat(0x39734c);
 function tree(x,z,s){const g=new THREE.Group();g.position.set(x,0,z);city.add(g);const t=new THREE.Mesh(new THREE.CylinderGeometry(.35*s,.5*s,3*s,7),trunk);t.position.y=1.5*s;t.castShadow=true;g.add(t);const c=new THREE.Mesh(new THREE.SphereGeometry(2.1*s,8,7),leaves);c.position.y=4*s;c.castShadow=true;g.add(c);}
@@ -60,7 +64,7 @@ function makeCar(x,z,color,parked=true){const g=new THREE.Group();g.position.set
 const cars=[];for(let i=0;i<12;i++){const c=makeCar(-260+Math.random()*520,(i%4)*55-82.5,[0xd04c3e,0xe2e0d5,0x267a99,0x272b31,0xc6a340][i%5]);c.group.rotation.y=(i%2)*Math.PI/2;cars.push(c);}
 for(let i=0;i<8;i++){const c=makeCar(-260+i*72,-28,[0xc54c3f,0xd6d7d0,0x1c718b,0x272a30][i%4],false);c.speed=4+Math.random()*3;cars.push(c);}
 const people=[];for(let i=0;i<24;i++){const p=new THREE.Group();const top=new THREE.Mesh(new THREE.CapsuleGeometry(.23,.55,3,6),mat([0xd6a23d,0xb95648,0x397e80,0xd2d2cb,0x70589a][i%5]));top.position.y=1.05;p.add(top);const h=new THREE.Mesh(new THREE.SphereGeometry(.19,8,7),skin);h.position.y=1.75;p.add(h);p.position.set(-285+Math.random()*570,0,-125+Math.random()*250);city.add(p);people.push({mesh:p,angle:Math.random()*Math.PI*2,turn:1+Math.random()*3});}
-const state={started:false,driving:null,money:50000,energy:100,ownsHome:false,inventory:[],activeJob:null,inside:false,outsidePosition:null};
+const state={started:false,driving:null,money:50000,energy:100,ownsHome:false,inventory:[],furniture:[],activeJob:null,inside:false,outsidePosition:null};
 const saveKey='cityLife3DSaveV2';
 const jobs=[
  {name:'Neighbourhood delivery',pay:160,x:78,z:-92,detail:'Deliver a parcel to the apartment block'},
@@ -91,8 +95,8 @@ $('city-menu').onclick=()=>openPanel('City services','Manage your growing life i
  {label:'Save progress',run:()=>{closePanel();save();}}
 ]);
 function notify(s){$('toast').textContent=s;$('toast').style.display='block';clearTimeout(notify.t);notify.t=setTimeout(()=>$('toast').style.display='none',2200);}
-function save(showMessage=true){try{localStorage.setItem(saveKey,JSON.stringify({money:state.money,player:{x:player.position.x,z:player.position.z},energy:state.energy,ownsHome:state.ownsHome,inventory:state.inventory,activeJob:state.activeJob}));if(showMessage)notify('Progress saved on this device.');}catch{notify('Unable to save.');}}
-function load(){try{const d=JSON.parse(localStorage.getItem(saveKey));if(!d)return false;state.money=d.money??50000;state.energy=d.energy??100;state.ownsHome=!!d.ownsHome;state.inventory=d.inventory||[];state.activeJob=d.activeJob||null;player.position.set(d.player?.x||0,0,d.player?.z||4);return true;}catch{return false;}}
+function save(showMessage=true){try{localStorage.setItem(saveKey,JSON.stringify({money:state.money,player:{x:player.position.x,z:player.position.z},energy:state.energy,ownsHome:state.ownsHome,inventory:state.inventory,furniture:state.furniture,activeJob:state.activeJob}));if(showMessage)notify('Progress saved on this device.');}catch{notify('Unable to save.');}}
+function load(){try{const d=JSON.parse(localStorage.getItem(saveKey));if(!d)return false;state.money=d.money??50000;state.energy=d.energy??100;state.ownsHome=!!d.ownsHome;state.inventory=d.inventory||[];state.furniture=d.furniture||[];state.activeJob=d.activeJob||null;player.position.set(d.player?.x||0,0,d.player?.z||4);return true;}catch{return false;}}
 function collides(x,z,r=.8){return solidBuildings.some(b=>Math.abs(x-b.x)<b.w/2+r&&Math.abs(z-b.z)<b.d/2+r);}
 const input={x:0,y:0,sprint:false};let pointer=null;const stick=$('stick'),nub=$('nub');
 function moveStick(e){const r=stick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,len=Math.hypot(dx,dy),k=Math.min(1,len/43);input.x=len?dx/len*k:0;input.y=len?dy/len*k:0;nub.style.left=(35+input.x*36)+'px';nub.style.top=(35+input.y*36)+'px';}
