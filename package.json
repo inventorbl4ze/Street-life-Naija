@@ -1,16 +1,20 @@
 {
   "name": "city-life-unlimited",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "CITY LIFE: UNLIMITED mobile city-life game",
+  "type": "module",
+  "description": "CITY LIFE: UNLIMITED mobile 3D city-life game",
   "scripts": {
-    "build": "mkdir -p www && cp index.html www/index.html"
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
-    "@capacitor/core": "^7.4.3"
+    "@capacitor/core": "^7.4.3",
+    "three": "^0.180.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.4.3"
+    "@capacitor/cli": "^7.4.3",
+    "vite": "^6.3.5"
   }
 }
