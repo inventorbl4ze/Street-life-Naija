@@ -60,10 +60,34 @@ function makeCar(x,z,color,parked=true){const g=new THREE.Group();g.position.set
 const cars=[];for(let i=0;i<12;i++){const c=makeCar(-135+Math.random()*270,(i%4)*55-82.5,[0xd04c3e,0xe2e0d5,0x267a99,0x272b31,0xc6a340][i%5]);c.group.rotation.y=(i%2)*Math.PI/2;cars.push(c);}
 for(let i=0;i<8;i++){const c=makeCar(-130+i*36,-28,[0xc54c3f,0xd6d7d0,0x1c718b,0x272a30][i%4],false);c.speed=4+Math.random()*3;cars.push(c);}
 const people=[];for(let i=0;i<24;i++){const p=new THREE.Group();const top=new THREE.Mesh(new THREE.CapsuleGeometry(.23,.55,3,6),mat([0xd6a23d,0xb95648,0x397e80,0xd2d2cb,0x70589a][i%5]));top.position.y=1.05;p.add(top);const h=new THREE.Mesh(new THREE.SphereGeometry(.19,8,7),skin);h.position.y=1.75;p.add(h);p.position.set(-125+Math.random()*250,0,-125+Math.random()*250);city.add(p);people.push({mesh:p,angle:Math.random()*Math.PI*2,turn:1+Math.random()*3});}
-const state={started:false,driving:null,money:3500,energy:100};const saveKey='cityLife3DSaveV1';
+const state={started:false,driving:null,money:3500,energy:100,ownsHome:false,inventory:[],activeJob:null};
+const saveKey='cityLife3DSaveV1';
+const jobs=[
+ {name:'Neighbourhood delivery',pay:1600,x:78,z:-92,detail:'Deliver a parcel to the apartment block'},
+ {name:'Market collection',pay:2200,x:-92,z:88,detail:'Collect supplies from the market'},
+ {name:'Office documents',pay:2800,x:112,z:112,detail:'Take documents to the business district'}
+];
+function openPanel(title,copy,options){
+ $('panel-title').textContent=title;$('panel-copy').textContent=copy;
+ const root=$('panel-options');root.innerHTML='';
+ options.forEach(o=>{const b=document.createElement('button');b.textContent=o.label;b.onclick=()=>{o.run();};root.appendChild(b);});
+ $('city-panel').classList.remove('hidden');
+}
+function closePanel(){$('city-panel').classList.add('hidden');}
+$('close-panel').onclick=closePanel;
+function openJobs(){
+ if(state.activeJob){openPanel('Active work',state.activeJob.detail+' · Go to the marked location to collect ₦'+state.activeJob.pay.toLocaleString('en-NG')+'.',[{label:'Cancel this job',run:()=>{state.activeJob=null;closePanel();notify('Job cancelled.');}}]);return;}
+ openPanel('Local job board','Choose a lawful local task. Reach the yellow marker to collect your payment.',jobs.map((j)=>({label:j.name+' · ₦'+j.pay.toLocaleString('en-NG'),run:()=>{state.activeJob=j;closePanel();notify('Job accepted: '+j.detail+'.');}})));
+}
+$('jobs').onclick=openJobs;
+$('city-menu').onclick=()=>openPanel('City services','Manage your growing life in the city.',[
+ {label:state.ownsHome?'Home owned ✓':'Buy a starter home · ₦15,000',run:()=>{if(state.ownsHome){notify('You already own a home.');return;}if(state.money<15000){notify('You need ₦15,000. Earn money from local jobs.');return;}state.money-=15000;state.ownsHome=true;closePanel();notify('Congratulations! You own a home.');save(false);}},
+ {label:'View inventory · '+state.inventory.length+' items',run:()=>openPanel('Inventory',state.inventory.length?state.inventory.join(', '):'Your inventory is empty.',[{label:'Close',run:closePanel}])},
+ {label:'Save progress',run:()=>{closePanel();save();}}
+]);
 function notify(s){$('toast').textContent=s;$('toast').style.display='block';clearTimeout(notify.t);notify.t=setTimeout(()=>$('toast').style.display='none',2200);}
-function save(){try{localStorage.setItem(saveKey,JSON.stringify({money:state.money,player:{x:player.position.x,z:player.position.z},energy:state.energy}));notify('Progress saved on this device.');}catch{notify('Unable to save.');}}
-function load(){try{const d=JSON.parse(localStorage.getItem(saveKey));if(!d)return false;state.money=d.money||3500;state.energy=d.energy??100;player.position.set(d.player?.x||0,0,d.player?.z||4);return true;}catch{return false;}}
+function save(showMessage=true){try{localStorage.setItem(saveKey,JSON.stringify({money:state.money,player:{x:player.position.x,z:player.position.z},energy:state.energy,ownsHome:state.ownsHome,inventory:state.inventory,activeJob:state.activeJob}));if(showMessage)notify('Progress saved on this device.');}catch{notify('Unable to save.');}}
+function load(){try{const d=JSON.parse(localStorage.getItem(saveKey));if(!d)return false;state.money=d.money||3500;state.energy=d.energy??100;state.ownsHome=!!d.ownsHome;state.inventory=d.inventory||[];state.activeJob=d.activeJob||null;player.position.set(d.player?.x||0,0,d.player?.z||4);return true;}catch{return false;}}
 function collides(x,z,r=.8){return solidBuildings.some(b=>Math.abs(x-b.x)<b.w/2+r&&Math.abs(z-b.z)<b.d/2+r);}
 const input={x:0,y:0,sprint:false};let pointer=null;const stick=$('stick'),nub=$('nub');
 function moveStick(e){const r=stick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,len=Math.hypot(dx,dy),k=Math.min(1,len/43);input.x=len?dx/len*k:0;input.y=len?dy/len*k:0;nub.style.left=(35+input.x*36)+'px';nub.style.top=(35+input.y*36)+'px';}
@@ -76,21 +100,85 @@ function keyboard(){if(keys.w||keys.arrowup)input.y=-1;else if(keys.s||keys.arro
 function nearestCar(){let best=null,bd=5;for(const c of cars){const d=c.group.position.distanceTo(player.position);if(d<bd){bd=d;best=c;}}return best;}
 function useVehicle(){if(state.driving){state.driving.occupied=false;state.driving=null;player.visible=true;notify('You left the car.');return;}const c=nearestCar();if(!c){notify('Move closer to a parked car.');return;}if(!c.parked){notify('That car is moving in traffic. Find a parked car.');return;}state.driving=c;c.occupied=true;player.visible=false;notify('Driving mode: use the joystick to steer and move.');}
 $('vehicle').onclick=useVehicle;
-$('interact').onclick=()=>notify('Explore the streets. More missions and building interactions are planned.');
+function interact(){
+ if(state.driving){notify('Leave the vehicle before interacting.');return;}
+ let nearestPerson=null,pd=5;
+ for(const p of people){const d=p.mesh.position.distanceTo(player.position);if(d<pd){pd=d;nearestPerson=p;}}
+ let nearestBuilding=null,bd=12;
+ for(const b of solidBuildings){const d=Math.hypot(player.position.x-b.x,player.position.z-b.z);if(d<bd){bd=d;nearestBuilding=b;}}
+ if(nearestBuilding&&bd<Math.min(pd,10)){
+  if(nearestBuilding.kind==='SHOP'){
+   openPanel('Corner shop','Buy useful everyday items.',[
+    {label:'Bottled water · ₦300',run:()=>buyItem('Bottled water',300)},
+    {label:'Meal pack · ₦700',run:()=>buyItem('Meal pack',700)},
+    {label:'Mobile phone · ₦8,000',run:()=>buyItem('Mobile phone',8000)}
+   ]);
+  }else{
+   openPanel('Residential property',state.ownsHome?'This is a city residence. You already own a starter home.':'A modest starter home is available for ₦15,000.',[
+    {label:state.ownsHome?'Already own a home':'Buy starter home · ₦15,000',run:()=>{if(state.ownsHome){notify('You already own a home.');return;}if(state.money<15000){notify('Not enough money. Try the job board.');return;}state.money-=15000;state.ownsHome=true;closePanel();notify('You bought your first home!');save(false);}}
+   ]);
+  }
+ }else if(nearestPerson&&pd<5){openPanel('City resident','Resident: Welcome! There is honest work on the job board if you need to earn money.',[{label:'Thanks!',run:closePanel},{label:'Find local work',run:openJobs}]);}
+ else notify('Nothing close enough. Walk near a resident, shop or home.');
+}
+function buyItem(name,cost){if(state.money<cost){notify('Not enough money for that item.');return;}state.money-=cost;state.inventory.push(name);closePanel();notify(name+' purchased.');save(false);}
+$('interact').onclick=interact;
 $('save').onclick=save;
 $('start').onclick=()=>{$('start-screen').style.display='none';state.started=true;notify('Welcome to the city. Explore freely!');};
+function nowClock(){return performance.now();}
 function update(dt){
  keyboard();const ix=input.x,iz=input.y;
  if(state.driving){const c=state.driving;c.speed+=(-iz)*24*dt;c.speed*=Math.pow(.985,dt*60);c.speed=THREE.MathUtils.clamp(c.speed,-10,30);c.group.rotation.y-=ix*dt*(.8+Math.abs(c.speed)*.04)*Math.sign(c.speed||1);const f=new THREE.Vector3(Math.sin(c.group.rotation.y),0,Math.cos(c.group.rotation.y));const next=c.group.position.clone().addScaledVector(f,c.speed*dt);if(!collides(next.x,next.z,1.5))c.group.position.copy(next);else{c.speed*=-.2;notify('You bumped into a building.');}player.position.copy(c.group.position);}
  else{const speed=input.sprint&&state.energy>0?10:5.2;if(input.sprint&&Math.hypot(ix,iz)>.1)state.energy=Math.max(0,state.energy-19*dt);else state.energy=Math.min(100,state.energy+9*dt);const len=Math.hypot(ix,iz)||1;if(Math.hypot(ix,iz)>.08){const dx=ix/len,dz=iz/len,nx=player.position.x+dx*speed*dt,nz=player.position.z+dz*speed*dt;if(!collides(nx,player.position.z))player.position.x=THREE.MathUtils.clamp(nx,-295,295);if(!collides(player.position.x,nz))player.position.z=THREE.MathUtils.clamp(nz,-295,295);player.rotation.y=Math.atan2(dx,dz);legs.forEach((l,i)=>l.rotation.x=Math.sin(performance.now()*.012+i*Math.PI)*.55);}else legs.forEach(l=>l.rotation.x=0);}
  for(const p of people){p.turn-=dt;if(p.turn<0){p.angle+=(Math.random()-.5)*2;p.turn=1+Math.random()*3;}const nx=p.mesh.position.x+Math.sin(p.angle)*.8*dt,nz=p.mesh.position.z+Math.cos(p.angle)*.8*dt;if(!collides(nx,nz,.3)){p.mesh.position.x=nx;p.mesh.position.z=nz;}else p.angle+=Math.PI/2;}
  for(const c of cars)if(!c.parked){c.group.position.x+=Math.sin(c.group.rotation.y)*c.speed*dt;c.group.position.z+=Math.cos(c.group.rotation.y)*c.speed*dt;if(c.group.position.x>155)c.group.position.x=-155;}
+ if(state.activeJob&&Math.hypot(player.position.x-state.activeJob.x,player.position.z-state.activeJob.z)<7){state.money+=state.activeJob.pay;notify('Job completed! You earned ₦'+state.activeJob.pay.toLocaleString('en-NG'));state.activeJob=null;save(false);}
+ // A gentle day-to-evening cycle keeps the district from looking static.
+ const cycle=(nowClock()/240000)*Math.PI*2;
+ sun.position.set(Math.cos(cycle)*100,75+Math.sin(cycle)*45,70);
+ sun.intensity=1.1+Math.max(0,Math.sin(cycle))*1.4;
+ scene.background.setHSL(.55,.28,.22+Math.max(0,Math.sin(cycle))*.35);
+ scene.fog.color.copy(scene.background);
  const target=state.driving?state.driving.group.position:player.position;const desired=new THREE.Vector3();
  if(state.driving){const f=new THREE.Vector3(Math.sin(state.driving.group.rotation.y),0,Math.cos(state.driving.group.rotation.y));desired.set(target.x-f.x*9,6.5,target.z-f.z*9);}else desired.set(target.x+Math.sin(player.rotation.y)*8,7.5,target.z+Math.cos(player.rotation.y)*8);
  camera.position.lerp(desired,1-Math.exp(-5*dt));camera.lookAt(target.x,target.y+1.4,target.z);
- $('money').textContent=state.money.toLocaleString('en-NG');$('status').textContent=state.driving?'Driving · '+Math.round(Math.abs(state.driving.speed)*5)+' km/h':'On foot · Energy '+Math.round(state.energy)+'%';
+ $('money').textContent=state.money.toLocaleString('en-NG');$('status').textContent=state.driving?'Driving · '+Math.round(Math.abs(state.driving.speed)*5)+' km/h':'On foot · Energy '+Math.round(state.energy)+'%';$('objective').textContent=state.activeJob?state.activeJob.name+(state.ownsHome?' · Homeowner':''):(state.ownsHome?'Homeowner · Explore freely':'Find work and buy a home');
 }
 camera.position.set(0,8,14);camera.lookAt(0,0,0);
-let last=performance.now();function frame(now){requestAnimationFrame(frame);const dt=Math.min(.04,(now-last)/1000);last=now;if(state.started)update(dt);renderer.render(scene,camera);}requestAnimationFrame(frame);
+// Original cinematic opening: a flyover, street-level pass and title reveal.
+const intro=$('cinematic'),caption=$('cinematic-caption'),title=$('cinematic-title');
+const introStart=performance.now();
+const camCurve=new THREE.CatmullRomCurve3([
+ new THREE.Vector3(-118,72,132),new THREE.Vector3(-68,46,84),
+ new THREE.Vector3(-18,28,40),new THREE.Vector3(48,20,-12),
+ new THREE.Vector3(90,13,-42),new THREE.Vector3(8,8,20)
+]);
+const lookCurve=new THREE.CatmullRomCurve3([
+ new THREE.Vector3(0,0,0),new THREE.Vector3(-30,8,0),
+ new THREE.Vector3(0,3,0),new THREE.Vector3(35,5,-10),
+ new THREE.Vector3(0,2,0),new THREE.Vector3(0,1,4)
+]);
+let introFinished=false;
+function finishIntro(){if(introFinished)return;introFinished=true;intro.classList.add('done');setTimeout(()=>{intro.style.display='none';},1200);}
+$('skip-intro').onclick=finishIntro;
+function cinematic(now){
+ if(introFinished)return;
+ const t=Math.min(1,(now-introStart)/16000);
+ const p=camCurve.getPoint(t),look=lookCurve.getPoint(t);
+ camera.position.copy(p);camera.lookAt(look);
+ const captions=[
+  [0,'A CITY THAT NEVER STANDS STILL'],
+  [.22,'EVERY STREET HAS A STORY'],
+  [.47,'EVERY CHOICE OPENS A NEW ROAD'],
+  [.7,'YOUR LIFE. YOUR CITY. YOUR RULES.']
+ ];
+ let current=captions[0][1];for(const c of captions)if(t>=c[0])current=c[1];
+ caption.textContent=current;caption.style.opacity=t<.94?'1':'0';
+ if(t>.72)title.classList.add('show');
+ if(t>=1)finishIntro();
+}
+let last=performance.now();
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.04,(now-last)/1000);last=now;if(!introFinished)cinematic(now);if(state.started)update(dt);renderer.render(scene,camera);}
+requestAnimationFrame(frame);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);});
 setInterval(()=>{if(state.started)try{localStorage.setItem(saveKey,JSON.stringify({money:state.money,player:{x:player.position.x,z:player.position.z},energy:state.energy}));}catch{}},15000);
