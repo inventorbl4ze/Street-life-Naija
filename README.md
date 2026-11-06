@@ -1,14 +1,33 @@
 # CITY LIFE: UNLIMITED
 
-A mobile-first, single-player city-life game project.
+A mobile-first, single-player 3D city-life game project.
 
-## Playable prototype
-The current game is an early **2D top-down prototype**. It includes a city map, touch joystick, pedestrians, traffic, buildings, basic shops, missions, money, and local save data.
+## Current prototype (0.2)
 
-The long-term target is a larger 3D city game. The current prototype is not yet a GTA-scale 3D game.
+The project has moved from the original 2D canvas prototype to a **Three.js 3D scene**. The current foundation includes:
+
+- Third-person 3D player character
+- Walk and sprint controls with a mobile joystick
+- A compact modern city block with roads, buildings, windows and trees
+- Basic wandering pedestrians
+- Parked cars and moving traffic vehicles
+- Enter/exit parked-car driving mode
+- Money and energy HUD
+- Local save data on the device
+- Mobile-friendly rendering settings
+
+This is an early playable foundation, not a finished open-world game. The city is currently a small prototype district; deeper gameplay systems, interiors, missions, shops, character customization, traffic intelligence, and a much larger world remain to be built.
+
+## Run the web version
+
+- Install Node.js
+- Run `npm install`
+- Run `npm run dev`
+- Open the local Vite address in a browser
 
 ## Android APK
-This project uses Capacitor to package the web game for Android. GitHub Actions is configured to build a debug APK when the game files change or when the workflow is manually run.
+
+Capacitor packages the bundled web game for Android. GitHub Actions is configured to build a **debug APK** when the game source changes or when the workflow is manually run.
 
 After a successful workflow:
 1. Open the repository's **Actions** tab.
@@ -16,12 +35,11 @@ After a successful workflow:
 3. Download the `CITY-LIFE-UNLIMITED-debug-apk` artifact.
 4. Extract the ZIP and install `app-debug.apk` on an Android device.
 
-A debug APK is for testing. A Play Store release needs a separately signed release build and store preparation.
+A debug APK is for testing, not a Play Store release. A store release needs a separately signed release build and store preparation.
 
-## Local development
-- `npm install`
-- `npm run build`
-- `npx cap add android`
-- `npx cap sync android`
+## Main files
 
-The web game is in `index.html`.
+- `index.html` — game screen and HUD
+- `src/main.js` — Three.js world, player, vehicles and simulation
+- `src/style.css` — mobile interface and controls
+- `capacitor.config.json` — Android wrapper settings
