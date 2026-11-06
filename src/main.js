@@ -82,11 +82,11 @@ function closePanel(){$('city-panel').classList.add('hidden');}
 $('close-panel').onclick=closePanel;
 function openJobs(){
  if(state.activeJob){openPanel('Active work',state.activeJob.detail+' · Go to the marked location to collect $'+state.activeJob.pay.toLocaleString('en-US')+'.',[{label:'Cancel this job',run:()=>{state.activeJob=null;closePanel();notify('Job cancelled.');}}]);return;}
- openPanel('Local job board','Choose a lawful local task. Reach the yellow marker to collect your payment.',jobs.map((j)=>({label:j.name+' · ₦'+j.pay.toLocaleString('en-NG'),run:()=>{state.activeJob=j;closePanel();notify('Job accepted: '+j.detail+'.');}})));
+ openPanel('Local job board','Choose a lawful local task. Reach the yellow marker to collect your payment.',jobs.map((j)=>({label:j.name+' · $'+j.pay.toLocaleString('en-US'),run:()=>{state.activeJob=j;closePanel();notify('Job accepted: '+j.detail+'.');}})));
 }
 $('jobs').onclick=openJobs;
 $('city-menu').onclick=()=>openPanel('City services','Manage your growing life in the city.',[
- {label:state.ownsHome?'Home owned ✓':'Buy a starter home · ₦15,000',run:()=>{if(state.ownsHome){notify('You already own a home.');return;}if(state.money<15000){notify('You need ₦15,000. Earn money from local jobs.');return;}state.money-=15000;state.ownsHome=true;closePanel();notify('Congratulations! You own a home.');save(false);}},
+ {label:state.ownsHome?'Home owned ✓':'Buy a starter home · $15,000',run:()=>{if(state.ownsHome){notify('You already own a home.');return;}if(state.money<15000){notify('You need $15,000. Earn money from local jobs.');return;}state.money-=15000;state.ownsHome=true;closePanel();notify('Congratulations! You own a home.');save(false);}},
  {label:'View inventory · '+state.inventory.length+' items',run:()=>openPanel('Inventory',state.inventory.length?state.inventory.join(', '):'Your inventory is empty.',[{label:'Close',run:closePanel}])},
  {label:'Save progress',run:()=>{closePanel();save();}}
 ]);
@@ -119,7 +119,9 @@ function buildInterior(kind){
 }
 function enterBuilding(kind){state.outsidePosition=player.position.clone();state.inside=true;state.insideKind=kind;buildInterior(kind);player.position.set(520,0,1);player.rotation.y=Math.PI;if(state.driving){state.driving.occupied=false;state.driving=null;}player.visible=true;closePanel();notify('You entered the '+(kind==='SHOP'?'shop':'building')+'. Press ACTION to leave.');}
 function exitBuilding(){state.inside=false;player.position.copy(state.outsidePosition||new THREE.Vector3(0,0,4));state.outsidePosition=null;notify('You stepped back outside.');}
-\nfunction interact(){
+
+function interact(){
+ if(state.inside){exitBuilding();return;}
  if(state.driving){notify('Leave the vehicle before interacting.');return;}
  let nearestPerson=null,pd=5;
  for(const p of people){const d=p.mesh.position.distanceTo(player.position);if(d<pd){pd=d;nearestPerson=p;}}
@@ -127,14 +129,16 @@ function exitBuilding(){state.inside=false;player.position.copy(state.outsidePos
  for(const b of solidBuildings){const d=Math.hypot(player.position.x-b.x,player.position.z-b.z);if(d<bd){bd=d;nearestBuilding=b;}}
  if(nearestBuilding&&bd<Math.min(pd,18)){
   if(nearestBuilding.kind==='SHOP'){
-   openPanel('Corner shop','Buy useful everyday items.',[
-    {label:'Bottled water · ₦300',run:()=>buyItem('Bottled water',3)},
-    {label:'Meal pack · ₦700',run:()=>buyItem('Meal pack',7)},
-    {label:'Mobile phone · ₦8,000',run:()=>buyItem('Mobile phone',80)}
+   openPanel('Corner shop','Enter to explore this shop, or buy an everyday item.',[
+    {label:'Enter shop',run:()=>enterBuilding('SHOP')},
+    {label:'Bottled water · $3',run:()=>buyItem('Bottled water',3)},
+    {label:'Meal pack · $7',run:()=>buyItem('Meal pack',7)},
+    {label:'Mobile phone · $80',run:()=>buyItem('Mobile phone',80)}
    ]);
   }else{
-   openPanel('Residential property',state.ownsHome?'This is a city residence. You already own a starter home.':'A modest starter home is available for ₦15,000.',[
-    {label:state.ownsHome?'Already own a home':'Buy starter home · ₦15,000',run:()=>{if(state.ownsHome){notify('You already own a home.');return;}if(state.money<15000){notify('Not enough money. Try the job board.');return;}state.money-=15000;state.ownsHome=true;closePanel();notify('You bought your first home!');save(false);}}
+   openPanel('Residential building',state.ownsHome?'Explore this residence. You already own a starter home.':'A starter home is available for $15,000.',[
+    {label:'Enter building',run:()=>enterBuilding('HOME')},
+    {label:state.ownsHome?'Home already owned':'Buy starter home · $15,000',run:()=>{if(state.ownsHome){notify('You already own a home.');return;}if(state.money<15000){notify('Not enough money. Try the job board.');return;}state.money-=15000;state.ownsHome=true;closePanel();notify('You bought your first home!');save(false);}}
    ]);
   }
  }else if(nearestPerson&&pd<5){openPanel('City resident','Resident: Welcome! There is honest work on the job board if you need to earn money.',[{label:'Thanks!',run:closePanel},{label:'Find local work',run:openJobs}]);}
@@ -151,7 +155,7 @@ function update(dt){
  else{const speed=input.sprint&&state.energy>0?10:5.2;if(input.sprint&&Math.hypot(ix,iz)>.1)state.energy=Math.max(0,state.energy-19*dt);else state.energy=Math.min(100,state.energy+9*dt);const len=Math.hypot(ix,iz)||1;if(Math.hypot(ix,iz)>.08){const dx=ix/len,dz=iz/len,nx=player.position.x+dx*speed*dt,nz=player.position.z+dz*speed*dt;if(!collides(nx,player.position.z))player.position.x=THREE.MathUtils.clamp(nx,-590,590);if(!collides(player.position.x,nz))player.position.z=THREE.MathUtils.clamp(nz,-590,590);player.rotation.y=Math.atan2(dx,dz);legs.forEach((l,i)=>l.rotation.x=Math.sin(performance.now()*.012+i*Math.PI)*.55);}else legs.forEach(l=>l.rotation.x=0);}
  for(const p of people){p.turn-=dt;if(p.turn<0){p.angle+=(Math.random()-.5)*2;p.turn=1+Math.random()*3;}const nx=p.mesh.position.x+Math.sin(p.angle)*.8*dt,nz=p.mesh.position.z+Math.cos(p.angle)*.8*dt;if(!collides(nx,nz,.3)){p.mesh.position.x=nx;p.mesh.position.z=nz;}else p.angle+=Math.PI/2;}
  for(const c of cars)if(!c.parked){c.group.position.x+=Math.sin(c.group.rotation.y)*c.speed*dt;c.group.position.z+=Math.cos(c.group.rotation.y)*c.speed*dt;if(c.group.position.x>300)c.group.position.x=-300;}
- if(state.activeJob&&Math.hypot(player.position.x-state.activeJob.x,player.position.z-state.activeJob.z)<7){state.money+=state.activeJob.pay;notify('Job completed! You earned ₦'+state.activeJob.pay.toLocaleString('en-NG'));state.activeJob=null;save(false);}
+ if(state.activeJob&&Math.hypot(player.position.x-state.activeJob.x,player.position.z-state.activeJob.z)<7){state.money+=state.activeJob.pay;notify('Job completed! You earned $'+state.activeJob.pay.toLocaleString('en-US'));state.activeJob=null;save(false);}
  // A gentle day-to-evening cycle keeps the district from looking static.
  const cycle=(nowClock()/240000)*Math.PI*2;
  sun.position.set(Math.cos(cycle)*100,75+Math.sin(cycle)*45,70);
@@ -163,7 +167,7 @@ function update(dt){
  camera.position.lerp(desired,1-Math.exp(-5*dt));camera.lookAt(target.x,target.y+1.4,target.z);
  if(state.activeJob){jobMarker.visible=true;jobMarker.position.set(state.activeJob.x,.25,state.activeJob.z);markerRing.rotation.z+=dt*.8;}else jobMarker.visible=false;
  $('vehicle').textContent=state.driving?'EXIT CAR':'ENTER CAR';
- $('money').textContent=state.money.toLocaleString('en-NG');$('status').textContent=state.driving?'Driving · '+Math.round(Math.abs(state.driving.speed)*5)+' km/h':'On foot · Energy '+Math.round(state.energy)+'%';$('objective').textContent=state.inside?'Inside · ACTION to exit':(state.activeJob?state.activeJob.name+(state.ownsHome?' · Homeowner':''):(state.ownsHome?'Homeowner · Explore freely':'Find work and buy a home'));
+ $('money').textContent=state.money.toLocaleString('en-US');$('status').textContent=state.driving?'Driving · '+Math.round(Math.abs(state.driving.speed)*5)+' km/h':'On foot · Energy '+Math.round(state.energy)+'%';$('objective').textContent=state.inside?'Inside · ACTION to exit':(state.activeJob?state.activeJob.name+(state.ownsHome?' · Homeowner':''):(state.ownsHome?'Homeowner · Explore freely':'Find work and buy a home'));
 }
 camera.position.set(0,8,14);camera.lookAt(0,0,0);
 // Original cinematic opening: a flyover, street-level pass and title reveal.
