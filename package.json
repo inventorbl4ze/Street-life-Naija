@@ -1,0 +1,16 @@
+{
+  "name": "city-life-unlimited",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CITY LIFE: UNLIMITED mobile city-life game",
+  "scripts": {
+    "build": "mkdir -p www && cp index.html www/index.html"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  }
+}
