@@ -112,14 +112,49 @@ $('vehicle').onclick=useVehicle;
 
 const interiorGroup=new THREE.Group();interiorGroup.position.set(520,0,520);city.add(interiorGroup);
 function buildInterior(kind){
- interiorGroup.clear();const floor=mat(0x9b8870),wall=mat(0xd8d0bd),dark=mat(0x51453b),wood=mat(0x815638);
+ interiorGroup.clear();
+ const floor=mat(kind==='HOSPITAL'?0xe8edf0:0x9b8870),wall=mat(kind==='HOSPITAL'?0xf5f7f8:0xd8d0bd),dark=mat(0x51453b),wood=mat(0x815638);
  box(interiorGroup,18,.35,16,floor,0,.1,0,false);box(interiorGroup,18,4,.35,wall,0,2,-8,false);
  box(interiorGroup,.35,4,16,wall,-9,2,0,false);box(interiorGroup,.35,4,16,wall,9,2,0,false);
  box(interiorGroup,6,4,.35,wall,6,2,8,false);box(interiorGroup,6,4,.35,wall,-6,2,8,false);
  for(const x of [-5,0,5])box(interiorGroup,2.2,1.5,.12,glass,x,2.6,-7.78,false);
  for(const x of [-5,0,5]){const lamp=new THREE.Mesh(new THREE.SphereGeometry(.18,8,6),new THREE.MeshBasicMaterial({color:0xffe4a3}));lamp.position.set(x,3.7,0);interiorGroup.add(lamp);}
- if(kind==='SHOP'){box(interiorGroup,10,1.2,1.3,wood,0,.8,-3);for(let x=-4;x<=4;x+=2)box(interiorGroup,.7,1.2,.55,mat(0x4e9a82),x,1.9,-3);box(interiorGroup,3,1.1,2,dark,0,.7,4);}
- else{box(interiorGroup,5,.8,2.4,mat(0x577b82),-3,.65,2);box(interiorGroup,5,.35,2.4,mat(0xd2c5a7),-3,1.2,2);box(interiorGroup,2,.8,2,wood,5,.5,-3);box(interiorGroup,2,.15,2,mat(0x7a9caa),5,1,-3);}
+ const furniture=(type,x,z,scale=1)=>{
+  if(type.includes('Chair')){box(interiorGroup,.9*scale,.25,.9*scale,wood,x,.65,z);for(const dx of [-.32,.32])for(const dz of [-.32,.32])box(interiorGroup,.12,.65,.12,dark,x+dx*scale,.32,z+dz*scale);box(interiorGroup,.9*scale,.9*scale,.16,wood,x,1.15,z-.38*scale);}
+  else if(type.includes('Bed')){box(interiorGroup,3*scale,.45,4*scale,wood,x,.42,z);box(interiorGroup,2.8*scale,.25,3.5*scale,mat(0x9fb7c6),x,.78,z);box(interiorGroup,2.8*scale,.45,.65*scale,mat(0xf0e9d9),x,1,z-1.35*scale);}
+  else if(type.includes('Sofa')){box(interiorGroup,4*scale,.6,1.5*scale,mat(0x4f7181),x,.6,z);box(interiorGroup,4*scale,1.4,.35,mat(0x4f7181),x,1.3,z-.58*scale);}
+  else if(type.includes('Table')){box(interiorGroup,2.4*scale,.18,1.6*scale,wood,x,1,z);for(const dx of [-.95,.95])for(const dz of [-.55,.55])box(interiorGroup,.14,1,.14,dark,x+dx*scale,.5,z+dz*scale);}
+  else if(type.includes('Fridge')){box(interiorGroup,1.2*scale,2.8*scale,1,mat(0xcbd7db),x,1.4*scale,z);box(interiorGroup,.08,1.5*scale,.08,dark,x+.4*scale,1.6*scale,z-.52*scale);}
+  else if(type.includes('TV')){box(interiorGroup,2.4*scale,1.5*scale,.14,mat(0x14191d),x,1.8*scale,z);box(interiorGroup,.15,.8,.15,dark,x,.4,z);}
+  else if(type.includes('Plant')){const pot=new THREE.Mesh(new THREE.CylinderGeometry(.35,.25,.55,8),wood);pot.position.set(x,.3,z);interiorGroup.add(pot);const crown=new THREE.Mesh(new THREE.SphereGeometry(.8,8,7),leaves);crown.position.set(x,1.2,z);interiorGroup.add(crown);}
+ };
+ if(kind==='HOME'||kind==='RESIDENCE'){
+  furniture('Sofa',-3,2);furniture('Table',1,2);furniture('TV',5,-3);
+  state.furniture.forEach((item,i)=>furniture(item,-5+(i%4)*3,5-Math.floor(i/4)*2,.72));
+  if(!state.furniture.length)furniture('Plant',5,5);
+ }else if(kind==='CHAIR STORE'){
+  for(let i=0;i<5;i++)furniture('Chair',-5+(i%3)*5,-4+Math.floor(i/3)*6,.8);
+ }else if(kind==='BED STORE'){
+  furniture('Bed',-3,0,.8);furniture('Bed',3,0,.8);
+ }else if(kind==='FOOD STORE'||kind==='SUPERMARKET'){
+  for(let row=0;row<3;row++){box(interiorGroup,1,2.2,10,wood,-5+row*5,1.2,-1);for(let z=-4;z<=3;z+=2)box(interiorGroup,.8,.7,.8,mat([0xd6a23d,0x9d4e3e,0x4f9a72][(row+z+8)%3]),-5+row*5,2.5,z);}
+  box(interiorGroup,4,1.2,1.4,dark,0,.8,6);
+ }else if(kind==='RESTAURANT'){
+  for(const x of [-5,0,5]){furniture('Table',x,0,.75);furniture('Chair',x-1.5,1,.55);furniture('Chair',x+1.5,1,.55);}
+  box(interiorGroup,10,1.2,1.5,wood,0,.8,-5);
+ }else if(kind==='BANK'){
+  box(interiorGroup,12,1.2,1.2,wood,0,.8,-5);
+  for(const x of [-4,0,4])box(interiorGroup,1.8,2.2,.3,glass,x,2,-4.3);
+  box(interiorGroup,2.2,2.5,1.2,dark,6,1.25,-5);
+ }else if(kind==='HOSPITAL'){
+  for(const x of [-5,0,5]){furniture('Bed',x,0,.55);box(interiorGroup,1.1,1.2,.12,mat(0x9cc9d2),x,1.5,-2);}
+  box(interiorGroup,5,1.1,1.2,mat(0x6c9b9c),0,.75,6);
+ }else if(kind==='MALL'){
+  for(const x of [-5,0,5]){box(interiorGroup,3,2.2,1,wood,x,1.1,-4);box(interiorGroup,2.4,.7,.12,glass,x,1.7,-3.4);}
+  furniture('Sofa',-4,4,.65);furniture('Plant',5,4,.8);
+ }else{
+  box(interiorGroup,10,1.2,1.3,wood,0,.8,-3);for(let x=-4;x<=4;x+=2)box(interiorGroup,.7,1.2,.55,mat(0x4e9a82),x,1.9,-3);box(interiorGroup,3,1.1,2,dark,0,.7,4);
+ }
 }
 function enterBuilding(kind){state.outsidePosition=player.position.clone();state.inside=true;state.insideKind=kind;buildInterior(kind);player.position.set(520,0,521);player.rotation.y=Math.PI;if(state.driving){state.driving.occupied=false;state.driving=null;}player.visible=true;closePanel();notify('You entered the '+(kind==='SHOP'?'shop':'building')+'. Press ACTION to leave.');}
 function exitBuilding(){state.inside=false;player.position.copy(state.outsidePosition||new THREE.Vector3(0,0,4));state.outsidePosition=null;notify('You stepped back outside.');}
