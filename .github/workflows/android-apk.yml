@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'src/**'
       - 'package.json'
       - 'capacitor.config.json'
       - '.github/workflows/android-apk.yml'
@@ -28,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Prepare web game
+      - name: Build web game
         run: npm run build
 
       - name: Add Android platform
@@ -45,7 +46,9 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
