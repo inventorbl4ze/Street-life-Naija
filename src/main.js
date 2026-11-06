@@ -67,6 +67,11 @@ const jobs=[
  {name:'Market collection',pay:2200,x:-92,z:88,detail:'Collect supplies from the market'},
  {name:'Office documents',pay:2800,x:112,z:112,detail:'Take documents to the business district'}
 ];
+const jobMarker=new THREE.Group();
+const markerRing=new THREE.Mesh(new THREE.TorusGeometry(2.4,.16,6,24),mat(0xffd34f));
+markerRing.rotation.x=Math.PI/2;jobMarker.add(markerRing);
+const markerBeam=new THREE.Mesh(new THREE.CylinderGeometry(.12,.65,5,8,1,true),new THREE.MeshBasicMaterial({color:0xffd34f,transparent:true,opacity:.22,side:THREE.DoubleSide}));
+markerBeam.position.y=2.5;jobMarker.add(markerBeam);jobMarker.visible=false;city.add(jobMarker);
 function openPanel(title,copy,options){
  $('panel-title').textContent=title;$('panel-copy').textContent=copy;
  const root=$('panel-options');root.innerHTML='';
@@ -142,6 +147,8 @@ function update(dt){
  const target=state.driving?state.driving.group.position:player.position;const desired=new THREE.Vector3();
  if(state.driving){const f=new THREE.Vector3(Math.sin(state.driving.group.rotation.y),0,Math.cos(state.driving.group.rotation.y));desired.set(target.x-f.x*9,6.5,target.z-f.z*9);}else desired.set(target.x+Math.sin(player.rotation.y)*8,7.5,target.z+Math.cos(player.rotation.y)*8);
  camera.position.lerp(desired,1-Math.exp(-5*dt));camera.lookAt(target.x,target.y+1.4,target.z);
+ if(state.activeJob){jobMarker.visible=true;jobMarker.position.set(state.activeJob.x,.25,state.activeJob.z);markerRing.rotation.z+=dt*.8;}else jobMarker.visible=false;
+ $('vehicle').textContent=state.driving?'EXIT CAR':'ENTER CAR';
  $('money').textContent=state.money.toLocaleString('en-NG');$('status').textContent=state.driving?'Driving · '+Math.round(Math.abs(state.driving.speed)*5)+' km/h':'On foot · Energy '+Math.round(state.energy)+'%';$('objective').textContent=state.activeJob?state.activeJob.name+(state.ownsHome?' · Homeowner':''):(state.ownsHome?'Homeowner · Explore freely':'Find work and buy a home');
 }
 camera.position.set(0,8,14);camera.lookAt(0,0,0);
