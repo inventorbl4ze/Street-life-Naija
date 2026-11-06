@@ -109,9 +109,9 @@ function interact(){
  if(state.driving){notify('Leave the vehicle before interacting.');return;}
  let nearestPerson=null,pd=5;
  for(const p of people){const d=p.mesh.position.distanceTo(player.position);if(d<pd){pd=d;nearestPerson=p;}}
- let nearestBuilding=null,bd=12;
+ let nearestBuilding=null,bd=18;
  for(const b of solidBuildings){const d=Math.hypot(player.position.x-b.x,player.position.z-b.z);if(d<bd){bd=d;nearestBuilding=b;}}
- if(nearestBuilding&&bd<Math.min(pd,10)){
+ if(nearestBuilding&&bd<Math.min(pd,18)){
   if(nearestBuilding.kind==='SHOP'){
    openPanel('Corner shop','Buy useful everyday items.',[
     {label:'Bottled water · ₦300',run:()=>buyItem('Bottled water',300)},
@@ -129,7 +129,7 @@ function interact(){
 function buyItem(name,cost){if(state.money<cost){notify('Not enough money for that item.');return;}state.money-=cost;state.inventory.push(name);closePanel();notify(name+' purchased.');save(false);}
 $('interact').onclick=interact;
 $('save').onclick=save;
-$('start').onclick=()=>{$('start-screen').style.display='none';state.started=true;notify('Welcome to the city. Explore freely!');};
+$('start').onclick=()=>{load();$('start-screen').style.display='none';state.started=true;notify('Welcome back to CITY LIFE: UNLIMITED.');};
 function nowClock(){return performance.now();}
 function update(dt){
  keyboard();const ix=input.x,iz=input.y;
@@ -188,4 +188,4 @@ let last=performance.now();
 function frame(now){requestAnimationFrame(frame);const dt=Math.min(.04,(now-last)/1000);last=now;if(!introFinished)cinematic(now);if(state.started)update(dt);renderer.render(scene,camera);}
 requestAnimationFrame(frame);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);});
-setInterval(()=>{if(state.started)try{localStorage.setItem(saveKey,JSON.stringify({money:state.money,player:{x:player.position.x,z:player.position.z},energy:state.energy}));}catch{}},15000);
+setInterval(()=>{if(state.started)save(false);},15000);
