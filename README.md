@@ -47,3 +47,13 @@ A debug APK is for testing, not a Play Store release. A store release requires a
 - `src/main.js` — 3D world, cinematic camera, player, cars, pedestrians and game systems
 - `src/style.css` — responsive mobile UI
 - `capacitor.config.json` — Android wrapper configuration
+
+
+## City services and shopping update
+- Enterable furnished interiors for supermarkets, restaurants, banks, hospitals, shopping malls, homes and specialist stores.
+- Specialist furniture stores include chair, bed, sofa, table and electronics shops.
+- Furniture purchases are added to the player's furniture collection and appear in residential interiors.
+- Supermarket and food-store shopping adds groceries and household supplies to inventory.
+- Restaurant meals restore energy; the hospital offers a rest service; the bank supports deposits and withdrawals.
+- The city landmarks use the in-game dollar economy and the $50,000 starting balance.
+- These are prototype interiors built from 3D game assets; they are not yet full multi-floor buildings.
