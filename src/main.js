@@ -41,11 +41,11 @@ function building(x,z,w,d,h,color,kind){
 function roadX(x,z,len){box(city,13,.12,len,road,x,0,z,false);for(let p=-len/2+7;p<len/2;p+=12)box(city,.16,.03,4,line,x,.08,z+p,false);}
 function roadZ(x,z,len){box(city,len,.12,13,road,x,0,z,false);for(let p=-len/2+7;p<len/2;p+=12)box(city,4,.03,.16,line,x+p,.08,z,false);}
 for(let i=-5;i<=5;i++){roadX(i*55,0,600);roadZ(0,i*55,600);}
-const landmarkKinds=['SUPERMARKET','RESTAURANT','BANK','HOSPITAL','MALL','CHAIR STORE','BED STORE','FOOD STORE'];
+const landmarkKinds=['SUPERMARKET','RESTAURANT','BANK','HOSPITAL','MALL','CHAIR STORE','BED STORE','FOOD STORE','SOFA STORE','TABLE STORE','ELECTRONICS STORE'];
 let landmarkIndex=0;
 for(let x=-275;x<=275;x+=55)for(let z=-275;z<=275;z+=55)for(let side=0;side<2;side++){
  const bx=x+(side?15:-15),bz=z+15,w=18+((Math.abs(x+z)+side*7)%8),d=17+((Math.abs(x-z)+side*5)%7),h=12+((Math.abs(x*3+z*2)+side*11)%35);
- const special=(z===-275&&side===0&&x>=-275&&x<=110)?landmarkKinds[(x+275)/55]:null;
+ const special=(z===-275&&side===0&&x>=-275&&x<=275)?landmarkKinds[(x+275)/55]:null;
  const kind=special|| (side?'SHOP':'RESIDENCE');
  building(bx,bz,w,d,h,[0xb9a080,0x9babb0,0xc5b49a,0x8e9b83,0xb47f67][(Math.abs(x+z+side*3)/5|0)%5],kind);
 }
@@ -162,7 +162,7 @@ function exitBuilding(){state.inside=false;player.position.copy(state.outsidePos
 function openStore(kind){
  const catalogs={
   'CHAIR STORE':[{name:'Wooden Chair',price:120},{name:'Modern Chair',price:250},{name:'Office Chair',price:450}],
-  'BED STORE':[{name:'Single Bed',price:900},{name:'Double Bed',price:1500},{name:'Luxury Bed',price:2600}],
+  'BED STORE':[{name:'Single Bed',price:900},{name:'Double Bed',price:1500},{name:'Luxury Bed',price:2600}],\n  'SOFA STORE':[{name:'Two-seat Sofa',price:1100},{name:'Family Sofa',price:1900},{name:'Luxury Sofa',price:3200}],\n  'TABLE STORE':[{name:'Coffee Table',price:250},{name:'Dining Table',price:700},{name:'Office Table',price:550}],\n  'ELECTRONICS STORE':[{name:'Flat-screen TV',price:1200},{name:'Home Sound System',price:800},{name:'Gaming Console',price:1800}],
   'FOOD STORE':[{name:'Bread and groceries',price:18},{name:'Fruit basket',price:25},{name:'Family food pack',price:55}],
   'SUPERMARKET':[{name:'Grocery basket',price:45},{name:'Cleaning supplies',price:30},{name:'Kitchen essentials',price:75}],
   'RESTAURANT':[{name:'Lunch meal',price:22},{name:'Dinner meal',price:35},{name:'Family meal',price:70}],
@@ -174,7 +174,7 @@ function openStore(kind){
  items.forEach(item=>opts.push({label:item.name+' · $'+item.price.toLocaleString('en-US'),run:()=>{
   if(state.money<item.price){notify('Not enough money.');return;}
   state.money-=item.price;
-  if(kind==='CHAIR STORE'||kind==='BED STORE')state.furniture.push(item.name);
+  if(kind==='CHAIR STORE'||kind==='BED STORE'||kind==='SOFA STORE'||kind==='TABLE STORE'||kind==='ELECTRONICS STORE')state.furniture.push(item.name);
   else state.inventory.push(item.name);
   closePanel();notify('Purchased '+item.name+'.');save(false);
  }}));
