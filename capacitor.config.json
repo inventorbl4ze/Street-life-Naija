@@ -1,7 +1,7 @@
 {
   "appId": "com.oduye.bo.citylifeunlimited",
   "appName": "CITY LIFE: UNLIMITED",
-  "webDir": "www",
+  "webDir": "dist",
   "server": {
     "androidScheme": "https"
   }
