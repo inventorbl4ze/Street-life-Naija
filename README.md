@@ -1,22 +1,26 @@
 # CITY LIFE: UNLIMITED
 
-A mobile-first, single-player 3D city-life game project.
+A mobile-first, single-player 3D city-life game prototype.
 
-## Current prototype (0.2)
+## Current build
 
-The project has moved from the original 2D canvas prototype to a **Three.js 3D scene**. The current foundation includes:
+The project uses Three.js and Vite, with Capacitor configured for Android packaging.
 
-- Third-person 3D player character
-- Walk and sprint controls with a mobile joystick
-- A compact modern city block with roads, buildings, windows and trees
-- Basic wandering pedestrians
-- Parked cars and moving traffic vehicles
-- Enter/exit parked-car driving mode
-- Money and energy HUD
-- Local save data on the device
-- Mobile-friendly rendering settings
+### Playable foundations
+- Third-person 3D character and follow camera
+- Mobile joystick, sprint and keyboard controls
+- Compact modern city district with roads, buildings, trees and windows
+- Pedestrians and simple traffic
+- Parked cars and a basic enter/drive/exit loop
+- Local job board with delivery-style objectives and rewards
+- Corner-shop purchases and a starter-home ownership system
+- Money, energy, inventory and local device saves
+- Repeating day-to-evening lighting cycle
+- Original 16-second cinematic opening with camera flyover, chapter captions, title reveal and skip button
 
-This is an early playable foundation, not a finished open-world game. The city is currently a small prototype district; deeper gameplay systems, interiors, missions, shops, character customization, traffic intelligence, and a much larger world remain to be built.
+## Current limitations
+
+This is an early prototype, not a finished GTA-scale open world. The city is one compact district. Interiors are not yet explorable; vehicles, pedestrian AI, jobs, traffic rules, missions, property management, animations, audio, and the city map need substantial expansion and testing. Some systems are intentionally simple placeholders.
 
 ## Run the web version
 
@@ -27,7 +31,7 @@ This is an early playable foundation, not a finished open-world game. The city i
 
 ## Android APK
 
-Capacitor packages the bundled web game for Android. GitHub Actions is configured to build a **debug APK** when the game source changes or when the workflow is manually run.
+GitHub Actions is configured to build a **debug APK** when game source files change or when the workflow is manually run.
 
 After a successful workflow:
 1. Open the repository's **Actions** tab.
@@ -35,11 +39,11 @@ After a successful workflow:
 3. Download the `CITY-LIFE-UNLIMITED-debug-apk` artifact.
 4. Extract the ZIP and install `app-debug.apk` on an Android device.
 
-A debug APK is for testing, not a Play Store release. A store release needs a separately signed release build and store preparation.
+A debug APK is for testing, not a Play Store release. A store release requires a separately signed release build and further device testing.
 
 ## Main files
 
-- `index.html` — game screen and HUD
-- `src/main.js` — Three.js world, player, vehicles and simulation
-- `src/style.css` — mobile interface and controls
-- `capacitor.config.json` — Android wrapper settings
+- `index.html` — game shell, HUD, intro and touch controls
+- `src/main.js` — 3D world, cinematic camera, player, cars, pedestrians and game systems
+- `src/style.css` — responsive mobile UI
+- `capacitor.config.json` — Android wrapper configuration
